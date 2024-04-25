@@ -33,14 +33,16 @@ public class GameManager : MonoBehaviour {
             OnGameStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-
+    
     private bool _isGamePaused;
     private float _mainMenuTimer = 1f;
     private float _countDownTimer = 3f;
     private float _gamePlayingTimer = 30f;
     private const float TotalGamePlayingTime = 30f;
     private const int WrongRecipePenalty = -100;
-
+    
+    [SerializeField] private StoveCounter stoveCounter;
+    
     private void Awake() {
         Instance = this;
         State = GameState.MainMenu;
@@ -52,12 +54,21 @@ public class GameManager : MonoBehaviour {
         DeliveryManager.Instance.OnRecipeCompleted += DeliveryManager_OnRecipeCompleted;
         DeliveryManager.Instance.OnDeliveryFailed += DeliveryManager_OnDeliveryFailed;
         Player.Instance.OnHoldItemChanged += Player_OnHoldItemChanged;
+        stoveCounter.OnFryingStateChange += StoveCounter_OnFryingStateChange;
 
         GameData = new GameData();
     }
 
-    public void Player_OnHoldItemChanged(object sender, EventArgs e) {
-        // Should this not be public?
+    private void StoveCounter_OnFryingStateChange(object sender, StoveCounter.FryingStateChangeEventArgs e) {
+        GameData.FryingState = e.FryingState;
+    }
+
+    /// <summary>
+    /// Update GameData.PlayerHoldItems when player hold item changes
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void Player_OnHoldItemChanged(object sender, EventArgs e) {
         
         if (!Player.Instance.HasKitchenObject()) {
             GameData.PlayerHoldItems = new List<string>();
@@ -70,7 +81,7 @@ public class GameManager : MonoBehaviour {
         
         if (Player.Instance.GetKitchenObject().TryGetPlate(out var plateKitchenObject)) {
             // Player is holding a plate
-            // plateKitchenObject.OnIngredientAdded += PlateKitchenObject_OnIngredientAdded;
+            plateKitchenObject.OnIngredientAdded += Player_OnHoldItemChanged;
             GameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.name));
         }
     }
@@ -138,6 +149,7 @@ public class GameManager : MonoBehaviour {
         }
 
         Debug.Log(State);
+        Debug.Log("GameData.FryingState: " + GameData.FryingState);
     }
 
     // public void StartGame() {

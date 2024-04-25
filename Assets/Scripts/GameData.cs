@@ -16,5 +16,5 @@ public class GameData {
     public List<string> PlayerHoldItems;
     
     public int FryingTimer;
-    public int FryingState;
+    public StoveCounter.FryingState FryingState;
 }
