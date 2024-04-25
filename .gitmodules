@@ -1,0 +1,3 @@
+[submodule "cserver"]
+	path = cserver
+	url = https://github.com/iceylemon157/game-cserver.git
