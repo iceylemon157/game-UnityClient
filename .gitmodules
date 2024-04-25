@@ -1,3 +1,6 @@
 [submodule "cserver"]
 	path = cserver
 	url = https://github.com/iceylemon157/game-cserver.git
+[submodule "wfrest"]
+	path = wfrest
+	url = https://github.com/wfrest/wfrest
