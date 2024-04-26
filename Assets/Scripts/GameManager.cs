@@ -12,7 +12,7 @@ public class GameManager : MonoBehaviour {
     public event EventHandler OnGameUnPaused;
 
     // Global GameData
-    public GameData GameData;
+    private GameData gameData;
 
     private enum GameState {
         MainMenu,
@@ -20,6 +20,12 @@ public class GameManager : MonoBehaviour {
         GamePlaying,
         Paused,
         GameOver
+    }
+    
+    private enum RoundState {
+        RoundStart,
+        RoundPlaying,
+        RoundEnd
     }
 
     private GameState _gameState;
@@ -34,11 +40,19 @@ public class GameManager : MonoBehaviour {
         }
     }
     
+    // Round-based game variables
+    private int _currentRound;
+    private RoundState _roundState;
+    private const int TotalRound = 1800;
+    
+    // Time-based game variables
     private bool _isGamePaused;
     private float _mainMenuTimer = 1f;
     private float _countDownTimer = 3f;
     private float _gamePlayingTimer = 30f;
     private const float TotalGamePlayingTime = 30f;
+    
+    // Score related variables
     private const int WrongRecipePenalty = -100;
     
     [SerializeField] private StoveCounter stoveCounter;
@@ -56,11 +70,16 @@ public class GameManager : MonoBehaviour {
         Player.Instance.OnHoldItemChanged += Player_OnHoldItemChanged;
         stoveCounter.OnFryingStateChange += StoveCounter_OnFryingStateChange;
 
-        GameData = new GameData();
+        gameData = new GameData();
+        
+        _currentRound = 1;
+        gameData.Round = _currentRound;
+        gameData.TotalScore = 0;
+
     }
 
     private void StoveCounter_OnFryingStateChange(object sender, StoveCounter.FryingStateChangeEventArgs e) {
-        GameData.FryingState = e.FryingState;
+        gameData.FryingState = e.FryingState;
     }
 
     /// <summary>
@@ -71,40 +90,42 @@ public class GameManager : MonoBehaviour {
     private void Player_OnHoldItemChanged(object sender, EventArgs e) {
         
         if (!Player.Instance.HasKitchenObject()) {
-            GameData.PlayerHoldItems = new List<string>();
+            gameData.PlayerHoldItems = new List<string>();
             return;
         }
         
-        GameData.PlayerHoldItems = new List<string> {
+        gameData.PlayerHoldItems = new List<string> {
             Player.Instance.GetKitchenObject().GetObjectName()
         };
         
         if (Player.Instance.GetKitchenObject().TryGetPlate(out var plateKitchenObject)) {
             // Player is holding a plate
             plateKitchenObject.OnIngredientAdded += Player_OnHoldItemChanged;
-            GameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.name));
+            gameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.name));
         }
     }
 
     private void DeliveryManager_OnDeliveryFailed(object sender, EventArgs e) {
-        GameData.RecipeDelivered = new List<int> { -1, WrongRecipePenalty };
+        gameData.RecipeDelivered = new List<int> { -1, WrongRecipePenalty };
+        gameData.TotalScore += WrongRecipePenalty;
     }
 
     private void DeliveryManager_OnRecipeCompleted(object sender, DeliveryManager.RecipeEventArgs e) {
-        GameData.RecipeDelivered = new List<int> { e.RecipeSO.id, e.RecipeSO.recipeScore };
+        gameData.RecipeDelivered = new List<int> { e.RecipeSO.id, e.RecipeSO.recipeScore };
+        gameData.TotalScore += e.RecipeSO.recipeScore;
     }
 
     private void DeliveryManager_OnRecipeSpawned(object sender, DeliveryManager.RecipeEventArgs e) {
         // Update GameData.NewRecipe and GameData.RecipeList
-        GameData.NewRecipe = new RecipeSO.RecipeData() {
+        gameData.NewRecipe = new RecipeSO.RecipeData() {
             id = e.RecipeSO.id,
             recipeName = e.RecipeSO.recipeName,
             recipeScore = e.RecipeSO.recipeScore,
         };
 
-        GameData.RecipeList = new List<RecipeSO.RecipeData>();
+        gameData.RecipeList = new List<RecipeSO.RecipeData>();
         foreach (var recipeSO in e.RecipeSOList) {
-            GameData.RecipeList.Add(new RecipeSO.RecipeData() {
+            gameData.RecipeList.Add(new RecipeSO.RecipeData() {
                 id = recipeSO.id,
                 recipeName = recipeSO.recipeName,
                 recipeScore = recipeSO.recipeScore,
@@ -133,11 +154,24 @@ public class GameManager : MonoBehaviour {
 
                 break;
             case GameState.GamePlaying:
-                _gamePlayingTimer -= Time.deltaTime;
-                if (_gamePlayingTimer <= 0f) {
+                // Time-based game logic
+                // _gamePlayingTimer -= Time.deltaTime;
+                // if (_gamePlayingTimer <= 0f) {
+                //     State = GameState.GameOver;
+                // }
+                
+                // Round-based game logic
+                if (_roundState == RoundState.RoundEnd) {
+                    _currentRound ++;
+                    _roundState = RoundState.RoundStart;
+                    
+                    gameData.Round = _currentRound;
+                }
+                if (_currentRound > TotalRound) {
                     State = GameState.GameOver;
                 }
-
+                Debug.Log("Current Round: " + _currentRound);
+                
                 break;
             case GameState.Paused:
                 break;
@@ -147,14 +181,37 @@ public class GameManager : MonoBehaviour {
             default:
                 throw new ArgumentOutOfRangeException();
         }
-
+        
         Debug.Log(State);
-        Debug.Log("GameData.FryingState: " + GameData.FryingState);
     }
 
     // public void StartGame() {
     //     State = GameState.Countdown;
     // }
+    
+    public bool IsRoundStart() {
+        return _roundState == RoundState.RoundStart;
+    }
+    
+    public bool IsRoundPlaying() {
+        return _roundState == RoundState.RoundPlaying;
+    }
+    
+    public bool IsRoundEnd() {
+        return _roundState == RoundState.RoundEnd;
+    }
+    
+    public void SetRoundPlaying() {
+        _roundState = RoundState.RoundPlaying;
+    }
+    
+    public void SetRoundEnd() {
+        _roundState = RoundState.RoundEnd;
+    }
+    
+    public int GetCurrentRound() {
+        return _currentRound;
+    }
 
     public bool IsGamePlaying() {
         return State == GameState.GamePlaying;
@@ -171,9 +228,13 @@ public class GameManager : MonoBehaviour {
     public float GetCountDownTimer() {
         return _countDownTimer;
     }
-
+    
     public float GetGamePlayingTimerNormalized() {
         return 1 - _gamePlayingTimer / TotalGamePlayingTime;
+    }
+    
+    public float GetGamePlayingRoundNormalized() {
+        return (float) _currentRound / TotalRound;
     }
 
     public void TogglePause() {
@@ -188,5 +249,9 @@ public class GameManager : MonoBehaviour {
             State = GameState.Paused;
             OnGamePaused?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    public GameData GetGameData() {
+        return gameData;
     }
 }

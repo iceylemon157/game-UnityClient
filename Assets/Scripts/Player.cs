@@ -18,7 +18,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     [SerializeField] private int port = 8887;
     [SerializeField] private bool testMode = true;
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private float rotationSpeed = 8f;
     // [SerializeField] private GameInput gameInput;
     // [SerializeField] private LayerMask counterLayerMask;
@@ -32,6 +32,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
     private const float PlayerSize = .65f;
     private const float PlayerHeight = 2f;
     private const float InteractionDistance = 2f;
+    
+    // Round-based game variables
+    private bool roundEnd = false;
 
     private void Awake() {
         if (Instance != null) {
@@ -84,20 +87,35 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         // TODO: Determine if the player can move or not when counting down?
         // if (!GameManager.Instance.IsGamePlaying() && !GameManager.Instance.IsCountDown()) return;
         if (!GameManager.Instance.IsGamePlaying()) return;
+
         
-        if (!testMode) {
-            var inputVector = GameInput.Instance.GetMovementVectorNormalized();
-            // var inputVector = gameInput.GetMovementVectorNormalized();
-            HandleMovement(inputVector);
-            HandleInteractions(inputVector);
-        } else {
-            StartCoroutine(GetOperationFromServer(movementVector => {
-                // Debug.Log("Received movement vector from server!" + movementVector);
-                HandleMovement(movementVector);
-                HandleInteractions(movementVector);
-                SendEventsToServer();
-            }));
-            // StartCoroutine(SendEventsRequestToServer());
+        if (GameManager.Instance.IsRoundStart()) {
+            GameManager.Instance.SetRoundPlaying();
+            roundEnd = false;
+            if (!testMode) {
+                var inputVector = GameInput.Instance.GetMovementVectorNormalized();
+                // var inputVector = gameInput.GetMovementVectorNormalized();
+                HandleMovement(inputVector);
+                HandleInteractions(inputVector);
+            } else {
+                StartCoroutine(GetOperationFromServer(movementVector => {
+                    // Debug.Log("Received movement vector from server!" + movementVector);
+                    // Debug.Log("Operation sent and received!");
+                    HandleMovement(movementVector);
+                    HandleInteractions(movementVector);
+                    // Debug.Log("Ready to send events to server!");
+                    SendEventsToServer();
+                    roundEnd = true;
+                }));
+                // StartCoroutine(SendEventsRequestToServer());
+            }
+        }
+        
+        // Debug.Log("Why are you here?");
+        // Debug.Log("Round End: " + roundEnd);
+        
+        if (roundEnd) {
+            GameManager.Instance.SetRoundEnd();
         }
     }
 
@@ -117,10 +135,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         var request = new UnityWebRequest(url, "POST");
         request.SetRequestHeader("Content-Type", "application/json");
 
-        var gameData = GetGameData();
-        // var gameDataJsonString = JsonUtility.ToJson(gameData);
-        var gameDataJsonString = JsonUtility.ToJson(GameManager.Instance.GameData);
-        Debug.Log("a log: " + GameManager.Instance.GameData.NewRecipe);
+        // var gameData = GetGameData();
+        var gameData = GameManager.Instance.GetGameData();
+        var gameDataJsonString = JsonUtility.ToJson(gameData);
         
         var bodyRaw = System.Text.Encoding.UTF8.GetBytes(gameDataJsonString);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -150,7 +167,8 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     private IEnumerator GetOperationFromServer(Action<Vector2> callback) {
         
-        var webRequest = UnityWebRequest.Get("http://127.0.0.1:" + port + "/api/operation");
+        var currentRound = GameManager.Instance.GetCurrentRound();
+        var webRequest = UnityWebRequest.Get("http://127.0.0.1:" + port + $"/api/operation?round={currentRound}");
         yield return webRequest.SendWebRequest();
         
         // Debug.Log("Received response from server...");
@@ -168,21 +186,29 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         webRequest.Dispose();
         
         Debug.Log(result);
-        if (result == "w") {
-            callback(Vector2.up);
-        } else if (result == "s") {
-            callback(Vector2.down);
-        } else if (result == "a") {
-            callback(Vector2.left);
-        } else if (result == "d") {
-            callback(Vector2.right);
-        } else if (result == "e") {
-            GameInput_OnInteractAction(null, EventArgs.Empty);
-        } else if (result == "f") {
-            GameInput_OnInteractAlternativeAction(null, EventArgs.Empty);
-        } else {
-            callback(Vector2.zero);
+        switch (result) {
+            case "w":
+                callback(Vector2.up);
+                break;
+            case "s":
+                callback(Vector2.down);
+                break;
+            case "a":
+                callback(Vector2.left);
+                break;
+            case "d":
+                callback(Vector2.right);
+                break;
+            case "e":
+                GameInput_OnInteractAction(null, EventArgs.Empty);
+                break;
+            case "f":
+                GameInput_OnInteractAlternativeAction(null, EventArgs.Empty);
+                break;
         }
+        
+        // must call the callback function, for the coroutine to exit
+        callback(Vector2.zero);
     }
     
     private IEnumerator SendInitialMessageToServer() {

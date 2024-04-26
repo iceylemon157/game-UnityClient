@@ -13,7 +13,29 @@ public class PlatesCounter : BaseCounter {
     private const float SpawnPlateTime = 4f;
     private const int MaxPlateCount = 4;
 
+    // Round-based version of game
+    private int _latestSpawnPlateRound;
+    private const int SpawnPlateRound = 100;
+    
+    private void Start() {
+        _spawnPlateTimer = 0;
+        _plateSpawnedCount = 0;
+        _latestSpawnPlateRound = 0;
+    }
+
     private void Update() {
+        if (_plateSpawnedCount >= MaxPlateCount) return;
+        
+        var currentRound = GameManager.Instance.GetCurrentRound();
+        var spawnPlateRound = currentRound - _latestSpawnPlateRound;
+        if (spawnPlateRound >= SpawnPlateRound) {
+            _latestSpawnPlateRound = currentRound;
+            _plateSpawnedCount ++;
+            OnPlateSpawned?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void TimeBasedUpdate() {
         if (_plateSpawnedCount >= MaxPlateCount) return;
         _spawnPlateTimer += Time.deltaTime;
         if (_spawnPlateTimer >= SpawnPlateTime) {

@@ -5,7 +5,7 @@ using UnityEngine;
 public class GameData {
     public int Round;
     public int TotalScore;
-    public int TimeLeft;
+    public int TimeLeft; // TimeLeft is not implemented yet, possibly never will be
     
     public RecipeSO.RecipeData NewRecipe;
     public List<int> RecipeDelivered = null;

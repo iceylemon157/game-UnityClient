@@ -27,6 +27,10 @@ public class DeliveryManager : MonoBehaviour {
 
     private const float SpawnRecipeTimeMax = 5f;
     private const int WaitingRecipesMax = 4;
+    
+    // Round-based version of game
+    private int _latestSpawnRecipeRound;
+    private const int SpawnRecipeRound = 200;
 
     private void Awake() {
         Instance = this;
@@ -38,27 +42,41 @@ public class DeliveryManager : MonoBehaviour {
         _waitingRecipesCount = 0;
         _successRecipeDelivered = 0;
         _mostRecentRecipeID = 0;
+        
+        _latestSpawnRecipeRound = 0;
     }
 
     private void Update() {
+        var currentRound = GameManager.Instance.GetCurrentRound();
+        var spawnRecipeRound = currentRound - _latestSpawnRecipeRound;
+        if (spawnRecipeRound < SpawnRecipeRound) return;
+        
+        _latestSpawnRecipeRound = currentRound;
+        CreateNewRecipe();
+    }
+    
+    private void TimeBasedUpdate() {
         _spawnRecipeTimer -= Time.deltaTime;
-        if (_spawnRecipeTimer <= 0f) {
-            _spawnRecipeTimer = SpawnRecipeTimeMax;
-            if (_waitingRecipesCount < WaitingRecipesMax) {
-                // Don't fix the yellow warning
-                // Or otherwise you will have to copy the RecipeSO field one by one
-                var waitingRecipeSO = new RecipeSO(recipeListSO.recipeSOList[Random.Range(0, recipeListSO.recipeSOList.Count)]);
-                waitingRecipeSO.id = ++ _mostRecentRecipeID;
-                Debug.Log("New recipe: " + waitingRecipeSO.recipeName + " is waiting!");
-                Debug.Log("Recipe ID: " + waitingRecipeSO.id);
-                _waitingRecipeSOs.Add(waitingRecipeSO);
-                _waitingRecipesCount ++;
-                OnRecipeSpawned?.Invoke(this, new RecipeEventArgs() {
-                    RecipeSO = waitingRecipeSO,
-                    RecipeSOList = _waitingRecipeSOs
-                });
-            }
-        }
+        if (!(_spawnRecipeTimer <= 0f)) return;
+        
+        _spawnRecipeTimer = SpawnRecipeTimeMax;
+        CreateNewRecipe();
+    }
+    
+    private void CreateNewRecipe() {
+        if (_waitingRecipesCount >= WaitingRecipesMax) return;
+        // Don't fix the yellow warning
+        // Or otherwise you will have to copy the RecipeSO field one by one
+        var waitingRecipeSO = new RecipeSO(recipeListSO.recipeSOList[Random.Range(0, recipeListSO.recipeSOList.Count)]);
+        waitingRecipeSO.id = ++ _mostRecentRecipeID;
+        Debug.Log("New recipe: " + waitingRecipeSO.recipeName + " is waiting!");
+        Debug.Log("Recipe ID: " + waitingRecipeSO.id);
+        _waitingRecipeSOs.Add(waitingRecipeSO);
+        _waitingRecipesCount ++;
+        OnRecipeSpawned?.Invoke(this, new RecipeEventArgs() {
+            RecipeSO = waitingRecipeSO,
+            RecipeSOList = _waitingRecipeSOs
+        });
     }
 
     public bool DeliverRecipe(PlateKitchenObject plateKitchenObject) {

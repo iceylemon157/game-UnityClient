@@ -22,7 +22,8 @@ public class StoveCounter : BaseCounter, IHasProgress {
     // Timer is for time-based version of game
     // Progress is for round-based version of game
     private float _fryingTimer;
-    private int _fryingProgress;
+    private int _fryingRound;
+    private int _startFryingRound;
 
     private FryingRecipeSO _fryingRecipeSO;
     private FryingState _fryingState;
@@ -30,10 +31,58 @@ public class StoveCounter : BaseCounter, IHasProgress {
     private void Start() {
         _fryingState = FryingState.Idle;
         _fryingTimer = 0;
-        _fryingProgress = 0;
+        _fryingRound = 0;
+        _startFryingRound = 0;
+    }
+    
+    private void Update() {
+        if (HasKitchenObject()) {
+            switch (_fryingState) {
+                case FryingState.Idle:
+                    break;
+                case FryingState.Frying:
+                    _fryingRound = GameManager.Instance.GetCurrentRound() - _startFryingRound;
+                    OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                        ProgressNormalized = _fryingRound / _fryingRecipeSO.fryingRound
+                    });
+                    if (_fryingRound >= _fryingRecipeSO.fryingRound) {
+                        _startFryingRound = GameManager.Instance.GetCurrentRound();
+                        GetKitchenObject().DestroySelf();
+                        KitchenObject.SpawnKitchenObject(_fryingRecipeSO.output, this);
+
+                        _fryingState = FryingState.Fried;
+                        OnFryingStateChange?.Invoke(this, new FryingStateChangeEventArgs() {
+                            FryingState = _fryingState
+                        });
+                        _fryingRecipeSO = GetFryingRecipeSOFromInput(GetKitchenObject().GetKitchenObjectSO());
+                    }
+
+                    break;
+                case FryingState.Fried:
+                    _fryingRound = GameManager.Instance.GetCurrentRound() - _startFryingRound;
+                    OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                        ProgressNormalized = _fryingRound / _fryingRecipeSO.fryingRound
+                    });
+                    if (_fryingRound >= _fryingRecipeSO.fryingRound) {
+                        _startFryingRound = -1;
+                        GetKitchenObject().DestroySelf();
+                        KitchenObject.SpawnKitchenObject(_fryingRecipeSO.output, this);
+                        _fryingState = FryingState.Burnt;
+                        OnFryingStateChange?.Invoke(this, new FryingStateChangeEventArgs() {
+                            FryingState = _fryingState
+                        });
+                    }
+
+                    break;
+                case FryingState.Burnt:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
     }
 
-    private void Update() {
+    private void TimeBasedUpdate() {
         if (HasKitchenObject()) {
             switch (_fryingState) {
                 case FryingState.Idle:
@@ -87,6 +136,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
                 _fryingRecipeSO = GetFryingRecipeSOFromInput(GetKitchenObject().GetKitchenObjectSO());
                 _fryingState = FryingState.Frying;
                 _fryingTimer = 0;
+                _startFryingRound = GameManager.Instance.GetCurrentRound();
                 OnFryingStateChange?.Invoke(this, new FryingStateChangeEventArgs() {
                     FryingState = _fryingState
                 });
