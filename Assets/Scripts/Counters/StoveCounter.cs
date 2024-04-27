@@ -20,8 +20,9 @@ public class StoveCounter : BaseCounter, IHasProgress {
     }
 
     // Timer is for time-based version of game
-    // Progress is for round-based version of game
     private float _fryingTimer;
+    
+    // Round-based version of game
     private int _fryingRound;
     private int _startFryingRound;
 

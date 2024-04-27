@@ -10,14 +10,13 @@ public class DeliveryCounter : BaseCounter {
     }
     public override void Interact(Player player) {
         if (!player.HasKitchenObject()) return;
-        if (player.GetKitchenObject().TryGetPlate(out var plate)) {
-            player.GetKitchenObject().DestroySelf();
-            var succeed = DeliveryManager.Instance.DeliverRecipe(plate);
-            if (!succeed) {
-                Debug.Log("You fucked up the delivery!");
-            } else {
-                Debug.Log("Tasty");
-            }
+        if (!player.GetKitchenObject().TryGetPlate(out var plate)) return;
+        player.GetKitchenObject().DestroySelf();
+        var succeed = DeliveryManager.Instance.DeliverRecipe(plate);
+        if (!succeed) {
+            Debug.Log("You fucked up the delivery!");
+        } else {
+            Debug.Log("Tasty");
         }
     }
 }

@@ -41,18 +41,17 @@ public class CuttingCounter : BaseCounter, IHasProgress {
         if (!HasKitchenObject()) return;
 
         var kitchenObjectSO = GetKitchenObject().GetKitchenObjectSO();
-        if (HasRecipeFromInput(kitchenObjectSO)) {
-            _cuttingProgress ++;
-            OnCutting?.Invoke(this, EventArgs.Empty);
-            OnAnyCutting?.Invoke(this, EventArgs.Empty);
-            OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
-                ProgressNormalized = 1f * _cuttingProgress / GetCuttingRecipeSOFromInput(kitchenObjectSO).cuttingTime
-            });
-            if (_cuttingProgress >= GetCuttingRecipeSOFromInput(kitchenObjectSO).cuttingTime) {
-                var output = GetOutputFromInput();
-                GetKitchenObject().DestroySelf();
-                KitchenObject.SpawnKitchenObject(output, this);
-            }
+        if (!HasRecipeFromInput(kitchenObjectSO)) return;
+        _cuttingProgress ++;
+        OnCutting?.Invoke(this, EventArgs.Empty);
+        OnAnyCutting?.Invoke(this, EventArgs.Empty);
+        OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+            ProgressNormalized = 1f * _cuttingProgress / GetCuttingRecipeSOFromInput(kitchenObjectSO).cuttingTime
+        });
+        if (_cuttingProgress >= GetCuttingRecipeSOFromInput(kitchenObjectSO).cuttingTime) {
+            var output = GetOutputFromInput();
+            GetKitchenObject().DestroySelf();
+            KitchenObject.SpawnKitchenObject(output, this);
         }
     }
 

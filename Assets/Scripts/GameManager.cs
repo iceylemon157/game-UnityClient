@@ -97,12 +97,11 @@ public class GameManager : MonoBehaviour {
         gameData.PlayerHoldItems = new List<string> {
             Player.Instance.GetKitchenObject().GetObjectName()
         };
-        
-        if (Player.Instance.GetKitchenObject().TryGetPlate(out var plateKitchenObject)) {
-            // Player is holding a plate
-            plateKitchenObject.OnIngredientAdded += Player_OnHoldItemChanged;
-            gameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.name));
-        }
+
+        if (!Player.Instance.GetKitchenObject().TryGetPlate(out var plateKitchenObject)) return;
+        // Player is holding a plate
+        plateKitchenObject.OnIngredientAdded += Player_OnHoldItemChanged;
+        gameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.name));
     }
 
     private void DeliveryManager_OnDeliveryFailed(object sender, EventArgs e) {
@@ -184,10 +183,6 @@ public class GameManager : MonoBehaviour {
         
         Debug.Log(State);
     }
-
-    // public void StartGame() {
-    //     State = GameState.Countdown;
-    // }
     
     public bool IsRoundStart() {
         return _roundState == RoundState.RoundStart;

@@ -34,7 +34,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
     private const float InteractionDistance = 2f;
     
     // Round-based game variables
-    private bool roundEnd = false;
+    private bool roundEnd;
 
     private void Awake() {
         if (Instance != null) {
@@ -45,9 +45,6 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
     }
 
     private void Start() {
-        // gameInput.OnInteractAction += GameInput_OnInteractAction;
-        // gameInput.OnInteractAlternativeAction += GameInput_OnInteractAlternativeAction;
-        // gameInput.OnDropAction += GameInput_OnDropAction;
         GameInput.Instance.OnInteractAction += GameInput_OnInteractAction;
         GameInput.Instance.OnInteractAlternativeAction += GameInput_OnInteractAlternativeAction;
         GameInput.Instance.OnDropAction += GameInput_OnDropAction;
@@ -75,11 +72,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         Debug.Log("You have pressed the drop button!");
         if (!HasKitchenObject()) return;
         Debug.Log("Kitchen object: " + GetKitchenObject() + "is being dropped!");
-        if (HasKitchenObject()) {
-            var kitchenObject = GetKitchenObject();
-            ClearKitchenObject();
-            kitchenObject.FallWithConstantSpeed();
-        }
+        var kitchenObject = GetKitchenObject();
+        ClearKitchenObject();
+        kitchenObject.FallWithConstantSpeed();
     }
 
     private void Update() {
@@ -94,7 +89,6 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             roundEnd = false;
             if (!testMode) {
                 var inputVector = GameInput.Instance.GetMovementVectorNormalized();
-                // var inputVector = gameInput.GetMovementVectorNormalized();
                 HandleMovement(inputVector);
                 HandleInteractions(inputVector);
             } else {
@@ -111,10 +105,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             }
         }
         
-        // Debug.Log("Why are you here?");
-        // Debug.Log("Round End: " + roundEnd);
-        
-        if (roundEnd) {
+        if (testMode && roundEnd) {
             GameManager.Instance.SetRoundEnd();
         }
     }
@@ -178,14 +169,10 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             // exit the coroutine
             callback(Vector2.zero);
         }
-        // else {
-        //     Debug.Log(webRequest.downloadHandler.text);
-        // }
 
         var result = webRequest.downloadHandler.text;
         webRequest.Dispose();
         
-        Debug.Log(result);
         switch (result) {
             case "w":
                 callback(Vector2.up);
@@ -257,12 +244,13 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
 
         if (canMove) {
+            Debug.Log("Move distance: " + moveDistance);
             transform1.position += moveDir * moveDistance;
         }
     }
 
     /// <summary>
-    /// Determine the selected counter by raycasting
+    /// Determine the selected counter by ray-casting
     /// </summary>
     /// <param name="inputVector"></param>
     private void HandleInteractions(Vector2 inputVector) {

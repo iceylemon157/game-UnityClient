@@ -28,8 +28,8 @@ public class PlatesCounterVisual : MonoBehaviour {
     private void PlatesCounter_OnPlateSpawned(object sender, EventArgs e) {
         var plateTransform = Instantiate(platePrefab, counterTop);
         plateTransform.localPosition = new Vector3(0, PlateHeight * _plateVisualTransformList.Count, 0);
-        Debug.Log(plateTransform.localPosition);
-        Debug.Log(_plateVisualTransformList.Count);
+        // Debug.Log(plateTransform.localPosition);
+        // Debug.Log(_plateVisualTransformList.Count);
         _plateVisualTransformList.Add(plateTransform);
     }
 }

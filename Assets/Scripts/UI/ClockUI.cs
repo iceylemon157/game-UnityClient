@@ -15,6 +15,10 @@ public class ClockUI : MonoBehaviour {
 
     private void Update() {
         if (GameManager.Instance.IsGamePlaying()) {
+            // Time-based game
+            // timerImage.fillAmount = GameManager.Instance.GetGamePlayingTimerNormalized();
+            
+            // Round-based game
             timerImage.fillAmount = GameManager.Instance.GetGamePlayingRoundNormalized();
         }
     }
