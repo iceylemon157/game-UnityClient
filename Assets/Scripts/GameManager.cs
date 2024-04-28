@@ -68,6 +68,7 @@ public class GameManager : MonoBehaviour {
         DeliveryManager.Instance.OnRecipeCompleted += DeliveryManager_OnRecipeCompleted;
         DeliveryManager.Instance.OnDeliveryFailed += DeliveryManager_OnDeliveryFailed;
         Player.Instance.OnHoldItemChanged += Player_OnHoldItemChanged;
+        Player.Instance.OnPlayerMoved += Player_OnPlayerMoved;
         stoveCounter.OnFryingStateChange += StoveCounter_OnFryingStateChange;
 
         gameData = new GameData();
@@ -75,7 +76,11 @@ public class GameManager : MonoBehaviour {
         _currentRound = 1;
         gameData.Round = _currentRound;
         gameData.TotalScore = 0;
+        gameData.PlayerPosition = Player.Instance.GetPlayerPosition();
+    }
 
+    private void Player_OnPlayerMoved(object sender, EventArgs e) {
+        gameData.PlayerPosition = Player.Instance.GetPlayerPosition();
     }
 
     private void StoveCounter_OnFryingStateChange(object sender, StoveCounter.FryingStateChangeEventArgs e) {

@@ -8,6 +8,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
     // Singleton
     public static Player Instance { get; private set; }
 
+    public event EventHandler OnPlayerMoved;
     public event EventHandler OnPickedUpSomething;
     public event EventHandler OnHoldItemChanged;
     public event EventHandler<SelectedCounterChangedEventArgs> OnSelectedCounterChanged;
@@ -32,9 +33,15 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
     private const float PlayerSize = .65f;
     private const float PlayerHeight = 2f;
     private const float InteractionDistance = 2f;
+    private const float MoveDistance = .5f;
+    private const float MapBasedRotationSpeed = 20f;
     
     // Round-based game variables
     private bool roundEnd;
+    
+    // Map related game variables
+    private static readonly Vector2 InitialPlayerPosition = new Vector2(4, 10);
+    private Vector2 _playerPosition;
 
     private void Awake() {
         if (Instance != null) {
@@ -42,12 +49,16 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
         
         Instance = this;
+        
+        // Map based player position
+        _playerPosition = InitialPlayerPosition;
     }
 
     private void Start() {
         GameInput.Instance.OnInteractAction += GameInput_OnInteractAction;
         GameInput.Instance.OnInteractAlternativeAction += GameInput_OnInteractAlternativeAction;
         GameInput.Instance.OnDropAction += GameInput_OnDropAction;
+
         
         // send an initial message to the server
         StartCoroutine(SendInitialMessageToServer());
@@ -95,7 +106,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
                 StartCoroutine(GetOperationFromServer(movementVector => {
                     // Debug.Log("Received movement vector from server!" + movementVector);
                     // Debug.Log("Operation sent and received!");
-                    HandleMovement(movementVector);
+                    MapBasedHandleMovement(movementVector);
                     HandleInteractions(movementVector);
                     // Debug.Log("Ready to send events to server!");
                     SendEventsToServer();
@@ -143,7 +154,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             TimeLeft = 0,
             
             NewRecipe = null,
-            RecipeDelivered = new List<int>() {0, 0},
+            RecipeDelivered = new List<int> {0, 0},
             RecipeTimeout = 0,
             RecipeList = new List<RecipeSO.RecipeData>(),
             
@@ -172,6 +183,8 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
         var result = webRequest.downloadHandler.text;
         webRequest.Dispose();
+        
+        Debug.Log("Operation received from server: " + result);
         
         switch (result) {
             case "w":
@@ -217,6 +230,27 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
         
         webRequest.Dispose();
+    }
+    
+    private void MapBasedHandleMovement(Vector2 inputVector) {
+        // In map based (game client mode), player can only walk alone grid
+        var moveDir = new Vector3(inputVector.x, 0, inputVector.y);
+
+        var transform1 = transform;
+        transform1.forward = Vector3.Slerp(transform1.forward, moveDir, Time.deltaTime * MapBasedRotationSpeed);
+
+        _isWalking = (inputVector != Vector2.zero);
+
+        var originalPosition = transform.position;
+        var canMove = CanMove(originalPosition, moveDir, MoveDistance);
+        if (!canMove) return;
+        
+        // Update Map-based player position
+        var mapBasedMoveDirection = new Vector2(-inputVector.y, inputVector.x);
+        _playerPosition += mapBasedMoveDirection;
+        OnPlayerMoved?.Invoke(this, EventArgs.Empty);
+        
+        transform1.position += moveDir * MoveDistance;
     }
 
     private void HandleMovement(Vector2 inputVector) {
@@ -314,5 +348,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     public bool HasKitchenObject() {
         return _kitchenObject != null;
+    }
+    
+    public Vector2 GetPlayerPosition() {
+        return _playerPosition;
     }
 }
