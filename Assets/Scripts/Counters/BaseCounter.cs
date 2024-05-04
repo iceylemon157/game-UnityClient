@@ -7,6 +7,10 @@ public class BaseCounter : MonoBehaviour, IKitchenObjectParent {
     [SerializeField] private Transform counterTop;
 
     private KitchenObject _kitchenObject;
+    
+    public static void ResetStaticData() {
+        OnAnyItemPlaced = null;
+    }
 
     public virtual void Interact(Player player) {
         // throw new NotImplementedException();

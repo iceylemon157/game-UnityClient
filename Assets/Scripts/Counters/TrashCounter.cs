@@ -5,6 +5,10 @@ using System;
 
 public class TrashCounter : BaseCounter {
     public static event EventHandler OnAnyItemTrashed;
+    
+    public new static void ResetStaticData() {
+        OnAnyItemTrashed = null;
+    }
 
     public override void Interact(Player player) {
         if (!player.HasKitchenObject()) return;
