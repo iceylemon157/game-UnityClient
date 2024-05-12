@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -60,8 +61,10 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         GameInput.Instance.OnDropAction += GameInput_OnDropAction;
 
         
-        // send an initial message to the server
-        StartCoroutine(SendInitialMessageToServer());
+        // send an initial message to the server if the game is in server mode
+        if (GameManager.Instance.IsServerMode()) {
+            StartCoroutine(SendInitialMessageToServer());
+        }
     }
 
     private void GameInput_OnInteractAlternativeAction(object sender, EventArgs e) {
@@ -90,30 +93,31 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     private void Update() {
         
-        // TODO: Determine if the player can move or not when counting down?
+        // Determine if the player can move or not when counting down?
         // if (!GameManager.Instance.IsGamePlaying() && !GameManager.Instance.IsCountDown()) return;
         if (!GameManager.Instance.IsGamePlaying()) return;
 
+        // if (!testMode) { // testMode is the old version of server mode
+        if (!GameManager.Instance.IsServerMode()) {
+            var inputVector = GameInput.Instance.GetMovementVectorNormalized();
+            HandleMovement(inputVector);
+            HandleInteractions(inputVector);
+            return;
+        }
         
         if (GameManager.Instance.IsRoundStart()) {
             GameManager.Instance.SetRoundPlaying();
             roundEnd = false;
-            if (!testMode) {
-                var inputVector = GameInput.Instance.GetMovementVectorNormalized();
-                HandleMovement(inputVector);
-                HandleInteractions(inputVector);
-            } else {
-                StartCoroutine(GetOperationFromServer(movementVector => {
-                    // Debug.Log("Received movement vector from server!" + movementVector);
-                    // Debug.Log("Operation sent and received!");
-                    MapBasedHandleMovement(movementVector);
-                    HandleInteractions(movementVector);
-                    // Debug.Log("Ready to send events to server!");
-                    SendEventsToServer();
-                    roundEnd = true;
-                }));
-                // StartCoroutine(SendEventsRequestToServer());
-            }
+            StartCoroutine(GetOperationFromServer(movementVector => {
+                // Debug.Log("Received movement vector from server!" + movementVector);
+                // Debug.Log("Operation sent and received!");
+                MapBasedHandleMovement(movementVector);
+                HandleInteractions(movementVector);
+                // Debug.Log("Ready to send events to server!");
+                SendEventsToServer();
+                roundEnd = true;
+            }));
+            // StartCoroutine(SendEventsRequestToServer());
         }
         
         if (testMode && roundEnd) {
@@ -184,7 +188,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         var result = webRequest.downloadHandler.text;
         webRequest.Dispose();
         
-        Debug.Log("Operation received from server: " + result);
+        // Debug.Log("Operation received from server: " + result);
         
         switch (result) {
             case "w":
@@ -278,7 +282,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
 
         if (canMove) {
-            Debug.Log("Move distance: " + moveDistance);
+            // Debug.Log("Move distance: " + moveDistance);
             transform1.position += moveDir * moveDistance;
         }
     }

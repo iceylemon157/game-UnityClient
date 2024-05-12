@@ -15,15 +15,23 @@ public class PlatesCounter : BaseCounter {
 
     // Round-based version of game
     private int _latestSpawnPlateRound;
-    private const int SpawnPlateRound = 100;
+    private const int SpawnPlateRound = 20;
     
     private void Start() {
         _spawnPlateTimer = 0;
         _plateSpawnedCount = 0;
         _latestSpawnPlateRound = 0;
     }
-
+    
     private void Update() {
+        if (GameManager.Instance.IsServerMode()) {
+            RoundBasedUpdate();
+        } else {
+            TimeBasedUpdate();
+        }
+    }
+
+    private void RoundBasedUpdate() {
         if (_plateSpawnedCount >= MaxPlateCount) return;
         
         var currentRound = GameManager.Instance.GetCurrentRound();

@@ -55,11 +55,18 @@ public class GameManager : MonoBehaviour {
     // Score related variables
     private const int WrongRecipePenalty = -100;
     
+    // Game Settings
+    private bool _isServerMode = true; // Played by player or server
+    private const string IsServerModeKey = "IsServerMode";
+    
     [SerializeField] private StoveCounter stoveCounter;
     
     private void Awake() {
         Instance = this;
         State = GameState.MainMenu;
+        
+        // Read Game Settings
+        _isServerMode = PlayerPrefs.GetInt(IsServerModeKey, 1) == 1;
     }
 
     private void Start() {
@@ -77,6 +84,7 @@ public class GameManager : MonoBehaviour {
         gameData.Round = _currentRound;
         gameData.TotalScore = 0;
         gameData.PlayerPosition = Player.Instance.GetPlayerPosition();
+        
     }
 
     private void Player_OnPlayerMoved(object sender, EventArgs e) {
@@ -115,6 +123,7 @@ public class GameManager : MonoBehaviour {
     }
 
     private void DeliveryManager_OnRecipeCompleted(object sender, DeliveryManager.RecipeEventArgs e) {
+        Debug.Log("why the fuck are you calling me");
         gameData.RecipeDelivered = new List<int> { e.RecipeSO.id, e.RecipeSO.recipeScore };
         gameData.TotalScore += e.RecipeSO.recipeScore;
     }
@@ -158,23 +167,27 @@ public class GameManager : MonoBehaviour {
 
                 break;
             case GameState.GamePlaying:
-                // Time-based game logic
-                // _gamePlayingTimer -= Time.deltaTime;
-                // if (_gamePlayingTimer <= 0f) {
-                //     State = GameState.GameOver;
-                // }
                 
-                // Round-based game logic
-                if (_roundState == RoundState.RoundEnd) {
-                    _currentRound ++;
-                    _roundState = RoundState.RoundStart;
-                    
-                    gameData.Round = _currentRound;
+                if (_isServerMode) {
+                    // Round-based game logic
+                    if (_roundState == RoundState.RoundEnd) {
+                        _currentRound ++;
+                        _roundState = RoundState.RoundStart;
+                        
+                        gameData.Round = _currentRound;
+                    }
+                    if (_currentRound > TotalRound) {
+                        State = GameState.GameOver;
+                    }
+                    // Debug.Log("Current Round: " + _currentRound);
+                } else {
+                    // Time-based game logic
+                    _gamePlayingTimer -= Time.deltaTime;
+                    // Debug.Log("Time Left: " + _gamePlayingTimer + "s");
+                    if (_gamePlayingTimer <= 0f) {
+                        State = GameState.GameOver;
+                    }
                 }
-                if (_currentRound > TotalRound) {
-                    State = GameState.GameOver;
-                }
-                Debug.Log("Current Round: " + _currentRound);
                 
                 break;
             case GameState.Paused:
@@ -186,7 +199,7 @@ public class GameManager : MonoBehaviour {
                 throw new ArgumentOutOfRangeException();
         }
         
-        Debug.Log(State);
+        // Debug.Log(State);
     }
     
     public bool IsRoundStart() {
@@ -253,5 +266,13 @@ public class GameManager : MonoBehaviour {
 
     public GameData GetGameData() {
         return gameData;
+    }
+    
+    public void SetServerMode(bool isServerMode) {
+        _isServerMode = isServerMode;
+    }
+    
+    public bool IsServerMode() {
+        return _isServerMode;
     }
 }

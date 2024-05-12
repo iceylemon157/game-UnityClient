@@ -18,7 +18,8 @@ public class DeliveryManagerUI : MonoBehaviour {
         UpdateVisual();
     }
 
-    private void DeliveryManager_OnRecipeCompleted(object sender, EventArgs e) {
+    private void DeliveryManager_OnRecipeCompleted(object sender, DeliveryManager.RecipeEventArgs e) {
+        Debug.Log("You should definitely update the visual now!");
         UpdateVisual();
     }
 
@@ -36,5 +37,6 @@ public class DeliveryManagerUI : MonoBehaviour {
             recipeTransform.gameObject.SetActive(true);
             recipeTransform.GetComponent<RecipeUI>().SetRecipeSO(waitingRecipeSO);
         }
+        Debug.Log("Finishing Updating visual for waiting recipes");
     }
 }

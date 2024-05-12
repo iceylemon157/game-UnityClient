@@ -37,6 +37,14 @@ public class StoveCounter : BaseCounter, IHasProgress {
     }
     
     private void Update() {
+        if (GameManager.Instance.IsServerMode()) {
+            RoundBasedUpdate();
+        } else {
+            TimeBasedUpdate();
+        }
+    }
+    
+    private void RoundBasedUpdate() {
         if (HasKitchenObject()) {
             switch (_fryingState) {
                 case FryingState.Idle:

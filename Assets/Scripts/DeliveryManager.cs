@@ -45,8 +45,17 @@ public class DeliveryManager : MonoBehaviour {
         
         _latestSpawnRecipeRound = 0;
     }
-
+    
     private void Update() {
+        Debug.Log("I don't know " + OnRecipeCompleted!.GetInvocationList().Length);
+        if (GameManager.Instance.IsServerMode()) {
+            RoundBasedUpdate();
+        } else {
+            TimeBasedUpdate();
+        }
+    }
+
+    private void RoundBasedUpdate() {
         var currentRound = GameManager.Instance.GetCurrentRound();
         var spawnRecipeRound = currentRound - _latestSpawnRecipeRound;
         if (spawnRecipeRound < SpawnRecipeRound) return;
@@ -82,8 +91,8 @@ public class DeliveryManager : MonoBehaviour {
     public bool DeliverRecipe(PlateKitchenObject plateKitchenObject) {
         for (var i = 0; i < _waitingRecipeSOs.Count; i ++) {
             var waitingRecipeSO = _waitingRecipeSOs[i];
-            waitingRecipeSO.kitchenObjectSOList.Sort((x, y) =>
-                string.Compare(x.objectName, y.objectName, StringComparison.Ordinal));
+            // waitingRecipeSO.kitchenObjectSOList.Sort((x, y) =>
+            //     string.Compare(x.objectName, y.objectName, StringComparison.Ordinal));
             plateKitchenObject.GetKitchenObjectSOList().Sort((x, y) =>
                 string.Compare(x.objectName, y.objectName, StringComparison.Ordinal));
 
@@ -91,16 +100,16 @@ public class DeliveryManager : MonoBehaviour {
                 waitingRecipeSO.kitchenObjectSOList.SequenceEqual(plateKitchenObject.GetKitchenObjectSOList());
 
             if (plateContentsMatch) {
+                _waitingRecipeSOs.RemoveAt(i);
+                _waitingRecipesCount --;
+                _successRecipeDelivered ++;
+                
                 OnRecipeCompleted?.Invoke(this, new RecipeEventArgs() {
                     RecipeSO = waitingRecipeSO,
                     RecipeSOList = _waitingRecipeSOs
                 });
                 OnDeliverySuccess?.Invoke(this, EventArgs.Empty);
-
-                _waitingRecipeSOs.RemoveAt(i);
-                _waitingRecipesCount --;
-                _successRecipeDelivered ++;
-
+                
                 return true;
             }
         }
