@@ -12,7 +12,7 @@ public class DeliveryCounter : BaseCounter {
         if (!player.HasKitchenObject()) return;
         if (!player.GetKitchenObject().TryGetPlate(out var plate)) return;
         player.GetKitchenObject().DestroySelf();
-        var succeed = DeliveryManager.Instance.DeliverRecipe(plate);
+        var succeed = DeliveryManager.Instance.DeliverOrder(plate);
         if (!succeed) {
             Debug.Log("You fucked up the delivery!");
         } else {

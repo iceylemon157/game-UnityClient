@@ -8,46 +8,68 @@ using Random = UnityEngine.Random;
 public class DeliveryManager : MonoBehaviour {
     public event EventHandler OnDeliveryFailed;
     public event EventHandler OnDeliverySuccess;
-    public event EventHandler<RecipeEventArgs> OnRecipeSpawned;
-    public event EventHandler<RecipeEventArgs> OnRecipeCompleted;
+    public event EventHandler<OrderEventArgs> OnOrderSpawned;
+    public event EventHandler<OrderEventArgs> OnOrderCompleted;
 
-    public class RecipeEventArgs : EventArgs {
-        public RecipeSO RecipeSO;
-        public List<RecipeSO> RecipeSOList;
+    public class OrderEventArgs : EventArgs {
+        public Order Order;
+        public List<Order> WaitingOrders;
     }
 
     public static DeliveryManager Instance { get; private set; }
 
     [SerializeField] private RecipeListSO recipeListSO;
-    private List<RecipeSO> _waitingRecipeSOs;
-    private float _spawnRecipeTimer;
-    private int _waitingRecipesCount;
-    private int _successRecipeDelivered;
-    private int _mostRecentRecipeID;
+    private List<Order> _waitingOrders;
+    private float _spawnOrderTimer;
+    private int _waitingOrdersCount;
+    private int _successOrderDelivered;
+    private int _mostRecentOrderID;
 
-    private const float SpawnRecipeTimeMax = 5f;
-    private const int WaitingRecipesMax = 4;
-    
+    private const float SpawnOrderTimeMax = 5f;
+    private const int WaitingOrdersMax = 4;
+
     // Round-based version of game
-    private int _latestSpawnRecipeRound;
-    private const int SpawnRecipeRound = 200;
+    private int _previousRound;
+    private int _latestSpawnOrderRound;
+    private const int SpawnOrderRound = 100;
+    private const int MaxOrderScore = 1000;
 
     private void Awake() {
         Instance = this;
-        _waitingRecipeSOs = new List<RecipeSO>();
+        _waitingOrders = new List<Order>();
     }
 
     private void Start() {
-        _spawnRecipeTimer = SpawnRecipeTimeMax;
-        _waitingRecipesCount = 0;
-        _successRecipeDelivered = 0;
-        _mostRecentRecipeID = 0;
-        
-        _latestSpawnRecipeRound = 0;
+        _spawnOrderTimer = SpawnOrderTimeMax;
+        _waitingOrdersCount = 0;
+        _successOrderDelivered = 0;
+        _mostRecentOrderID = 0;
+
+        _latestSpawnOrderRound = 0;
+
+        GameManager.Instance.OnNewRound += (sender, e) => {
+            var currentRound = GameManager.Instance.GetCurrentRound();
+            var isAnyOrderUpdated = false;
+            foreach (var order in _waitingOrders) {
+                var roundElapsed = currentRound - order.ExistedTime;
+                if (roundElapsed % 100 != 0) continue;
+                isAnyOrderUpdated = true;
+                order.OrderScore = roundElapsed switch {
+                    100 => 700,
+                    200 => 350,
+                    _ => 200
+                };
+            }
+            if (isAnyOrderUpdated) {
+                OnOrderSpawned?.Invoke(this, new OrderEventArgs {
+                    Order = null,
+                    WaitingOrders = _waitingOrders
+                });
+            }
+        };
     }
-    
+
     private void Update() {
-        Debug.Log("I don't know " + OnRecipeCompleted!.GetInvocationList().Length);
         if (GameManager.Instance.IsServerMode()) {
             RoundBasedUpdate();
         } else {
@@ -57,59 +79,65 @@ public class DeliveryManager : MonoBehaviour {
 
     private void RoundBasedUpdate() {
         var currentRound = GameManager.Instance.GetCurrentRound();
-        var spawnRecipeRound = currentRound - _latestSpawnRecipeRound;
-        if (spawnRecipeRound < SpawnRecipeRound) return;
-        
-        _latestSpawnRecipeRound = currentRound;
-        CreateNewRecipe();
+        var spawnRecipeRound = currentRound - _latestSpawnOrderRound;
+        if (spawnRecipeRound < SpawnOrderRound) return;
+
+        _latestSpawnOrderRound = currentRound;
+        CreateNewOrder();
     }
-    
+
     private void TimeBasedUpdate() {
-        _spawnRecipeTimer -= Time.deltaTime;
-        if (!(_spawnRecipeTimer <= 0f)) return;
-        
-        _spawnRecipeTimer = SpawnRecipeTimeMax;
-        CreateNewRecipe();
+        _spawnOrderTimer -= Time.deltaTime;
+        if (!(_spawnOrderTimer <= 0f)) return;
+
+        _spawnOrderTimer = SpawnOrderTimeMax;
+        CreateNewOrder();
     }
-    
-    private void CreateNewRecipe() {
-        if (_waitingRecipesCount >= WaitingRecipesMax) return;
-        // Don't fix the yellow warning
-        // Or otherwise you will have to copy the RecipeSO field one by one
-        var waitingRecipeSO = new RecipeSO(recipeListSO.recipeSOList[Random.Range(0, recipeListSO.recipeSOList.Count)]);
-        waitingRecipeSO.id = ++ _mostRecentRecipeID;
-        Debug.Log("New recipe: " + waitingRecipeSO.recipeName + " is waiting!");
-        Debug.Log("Recipe ID: " + waitingRecipeSO.id);
-        _waitingRecipeSOs.Add(waitingRecipeSO);
-        _waitingRecipesCount ++;
-        OnRecipeSpawned?.Invoke(this, new RecipeEventArgs() {
-            RecipeSO = waitingRecipeSO,
-            RecipeSOList = _waitingRecipeSOs
+
+    private void CreateNewOrder() {
+        if (_waitingOrdersCount >= WaitingOrdersMax) return;
+        var currentRound = GameManager.Instance.GetCurrentRound();
+        var newRecipeSO = recipeListSO.recipeSOList[Random.Range(0, recipeListSO.recipeSOList.Count)];
+        var newWaitingOrder = new Order {
+            OrderID = ++ _mostRecentOrderID,
+            RecipeSO = newRecipeSO,
+            OrderScore = MaxOrderScore,
+            ExistedTime = currentRound
+        };
+
+        Debug.Log("Order ID: " + newWaitingOrder.OrderID);
+        Debug.Log("Recipe of the order: " + newWaitingOrder.RecipeSO.recipeName);
+
+        _waitingOrders.Add(newWaitingOrder);
+        _waitingOrdersCount ++;
+        OnOrderSpawned?.Invoke(this, new OrderEventArgs {
+            Order = newWaitingOrder,
+            WaitingOrders = _waitingOrders
         });
     }
 
-    public bool DeliverRecipe(PlateKitchenObject plateKitchenObject) {
-        for (var i = 0; i < _waitingRecipeSOs.Count; i ++) {
-            var waitingRecipeSO = _waitingRecipeSOs[i];
+    public bool DeliverOrder(PlateKitchenObject plateKitchenObject) {
+        for (var i = 0; i < _waitingOrders.Count; i ++) {
+            var waitingOrder = _waitingOrders[i];
             // waitingRecipeSO.kitchenObjectSOList.Sort((x, y) =>
             //     string.Compare(x.objectName, y.objectName, StringComparison.Ordinal));
             plateKitchenObject.GetKitchenObjectSOList().Sort((x, y) =>
                 string.Compare(x.objectName, y.objectName, StringComparison.Ordinal));
 
             var plateContentsMatch =
-                waitingRecipeSO.kitchenObjectSOList.SequenceEqual(plateKitchenObject.GetKitchenObjectSOList());
+                waitingOrder.RecipeSO.kitchenObjectSOList.SequenceEqual(plateKitchenObject.GetKitchenObjectSOList());
 
             if (plateContentsMatch) {
-                _waitingRecipeSOs.RemoveAt(i);
-                _waitingRecipesCount --;
-                _successRecipeDelivered ++;
-                
-                OnRecipeCompleted?.Invoke(this, new RecipeEventArgs() {
-                    RecipeSO = waitingRecipeSO,
-                    RecipeSOList = _waitingRecipeSOs
+                _waitingOrders.RemoveAt(i);
+                _waitingOrdersCount --;
+                _successOrderDelivered ++;
+
+                OnOrderCompleted?.Invoke(this, new OrderEventArgs {
+                    Order = waitingOrder,
+                    WaitingOrders = _waitingOrders
                 });
                 OnDeliverySuccess?.Invoke(this, EventArgs.Empty);
-                
+
                 return true;
             }
         }
@@ -118,11 +146,11 @@ public class DeliveryManager : MonoBehaviour {
         return false;
     }
 
-    public List<RecipeSO> GetWaitingRecipeSOs() {
-        return _waitingRecipeSOs;
+    public List<Order> GetWaitingOrders() {
+        return _waitingOrders;
     }
 
-    public int GetSuccessRecipeDelivered() {
-        return _successRecipeDelivered;
+    public int GetSuccessOrderDelivered() {
+        return _successOrderDelivered;
     }
 }

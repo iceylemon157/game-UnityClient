@@ -6,7 +6,7 @@ public class CuttingCounter : BaseCounter, IHasProgress {
     public static event EventHandler OnAnyCutting;
 
     public event EventHandler OnCutting;
-    public event EventHandler<IHasProgress.OnProgressChangedEventArgs> OnProgressChanged;
+    public event EventHandler<IHasProgress.ProgressChangedEventArgs> OnProgressChanged;
 
     [SerializeField] private CuttingRecipeSO[] cuttingRecipes;
 
@@ -26,7 +26,7 @@ public class CuttingCounter : BaseCounter, IHasProgress {
             if (!player.HasKitchenObject()) {
                 GetKitchenObject().SetKitchenObjectParent(player);
                 _cuttingProgress = 0;
-                OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
                     ProgressNormalized = 0
                 });
             } else {
@@ -49,7 +49,7 @@ public class CuttingCounter : BaseCounter, IHasProgress {
         _cuttingProgress ++;
         OnCutting?.Invoke(this, EventArgs.Empty);
         OnAnyCutting?.Invoke(this, EventArgs.Empty);
-        OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+        OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
             ProgressNormalized = 1f * _cuttingProgress / GetCuttingRecipeSOFromInput(kitchenObjectSO).cuttingTime
         });
         if (_cuttingProgress >= GetCuttingRecipeSOFromInput(kitchenObjectSO).cuttingTime) {

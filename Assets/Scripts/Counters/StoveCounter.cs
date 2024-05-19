@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 
 public class StoveCounter : BaseCounter, IHasProgress {
-    public event EventHandler<IHasProgress.OnProgressChangedEventArgs> OnProgressChanged;
+    public event EventHandler<IHasProgress.ProgressChangedEventArgs> OnProgressChanged;
     [SerializeField] private FryingRecipeSO[] fryingRecipeSOArray;
 
     public enum FryingState {
@@ -51,7 +51,8 @@ public class StoveCounter : BaseCounter, IHasProgress {
                     break;
                 case FryingState.Frying:
                     _fryingRound = GameManager.Instance.GetCurrentRound() - _startFryingRound;
-                    OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                    OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
+                        Progress = _fryingRound,
                         ProgressNormalized = _fryingRound / _fryingRecipeSO.fryingRound
                     });
                     if (_fryingRound >= _fryingRecipeSO.fryingRound) {
@@ -69,7 +70,8 @@ public class StoveCounter : BaseCounter, IHasProgress {
                     break;
                 case FryingState.Fried:
                     _fryingRound = GameManager.Instance.GetCurrentRound() - _startFryingRound;
-                    OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                    OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
+                        Progress = _fryingRound,
                         ProgressNormalized = _fryingRound / _fryingRecipeSO.fryingRound
                     });
                     if (_fryingRound >= _fryingRecipeSO.fryingRound) {
@@ -98,7 +100,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
                     break;
                 case FryingState.Frying:
                     _fryingTimer += Time.deltaTime;
-                    OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                    OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
                         ProgressNormalized = 1f * _fryingTimer / _fryingRecipeSO.fryingTime
                     });
                     if (_fryingTimer >= _fryingRecipeSO.fryingTime) {
@@ -116,7 +118,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
                     break;
                 case FryingState.Fried:
                     _fryingTimer += Time.deltaTime;
-                    OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                    OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
                         ProgressNormalized = 1f * _fryingTimer / _fryingRecipeSO.fryingTime
                     });
                     if (_fryingTimer >= _fryingRecipeSO.fryingTime) {
@@ -158,7 +160,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
                 OnFryingStateChange?.Invoke(this, new FryingStateChangeEventArgs() {
                     FryingState = _fryingState
                 });
-                OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
                     ProgressNormalized = 0
                 });
             } else {
@@ -170,7 +172,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
                         OnFryingStateChange?.Invoke(this, new FryingStateChangeEventArgs() {
                             FryingState = _fryingState
                         });
-                        OnProgressChanged?.Invoke(this, new IHasProgress.OnProgressChangedEventArgs() {
+                        OnProgressChanged?.Invoke(this, new IHasProgress.ProgressChangedEventArgs() {
                             ProgressNormalized = 0
                         });
                     }
@@ -183,6 +185,10 @@ public class StoveCounter : BaseCounter, IHasProgress {
 
     public FryingState GetFryingState() {
         return _fryingState;
+    }
+    
+    public int GetFryingRound() {
+        return _fryingRound;
     }
 
     private bool HasRecipeFromInput(KitchenObjectSO kitchenObjectSO) {

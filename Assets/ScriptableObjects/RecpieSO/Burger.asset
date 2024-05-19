@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec2c03a2a365e4c25bc000a76f800884, type: 3}
   m_Name: Burger
   m_EditorClassIdentifier: 
+  id: 1
+  recipeScore: 1000
   kitchenObjectSOList:
   - {fileID: 11400000, guid: b07e4ca64a190444e9c66b3bfa2e9267, type: 2}
   - {fileID: 11400000, guid: 1619cb2357c13467092d45a8f3c6c2bd, type: 2}

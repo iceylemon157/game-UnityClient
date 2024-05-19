@@ -13,17 +13,17 @@ public class DeliveryManagerUI : MonoBehaviour {
     }
     
     private void Start() {
-        DeliveryManager.Instance.OnRecipeSpawned += DeliveryManager_OnRecipeSpawned;
-        DeliveryManager.Instance.OnRecipeCompleted += DeliveryManager_OnRecipeCompleted;
+        DeliveryManager.Instance.OnOrderSpawned += DeliveryManagerOnOrderSpawned;
+        DeliveryManager.Instance.OnOrderCompleted += DeliveryManagerOnOrderCompleted;
         UpdateVisual();
     }
 
-    private void DeliveryManager_OnRecipeCompleted(object sender, DeliveryManager.RecipeEventArgs e) {
-        Debug.Log("You should definitely update the visual now!");
+    private void DeliveryManagerOnOrderCompleted(object sender, DeliveryManager.OrderEventArgs e) {
+        // Debug.Log("You should definitely update the visual now!");
         UpdateVisual();
     }
 
-    private void DeliveryManager_OnRecipeSpawned(object sender, EventArgs e) {
+    private void DeliveryManagerOnOrderSpawned(object sender, EventArgs e) {
         UpdateVisual();
     }
 
@@ -32,10 +32,10 @@ public class DeliveryManagerUI : MonoBehaviour {
             if (child == recipeTemplate) continue;
             Destroy(child.gameObject);
         }
-        foreach (var waitingRecipeSO in DeliveryManager.Instance.GetWaitingRecipeSOs()) {
+        foreach (var waitingOrder in DeliveryManager.Instance.GetWaitingOrders()) {
             var recipeTransform = Instantiate(recipeTemplate, container);
             recipeTransform.gameObject.SetActive(true);
-            recipeTransform.GetComponent<RecipeUI>().SetRecipeSO(waitingRecipeSO);
+            recipeTransform.GetComponent<RecipeUI>().SetRecipeSO(waitingOrder.RecipeSO);
         }
         Debug.Log("Finishing Updating visual for waiting recipes");
     }

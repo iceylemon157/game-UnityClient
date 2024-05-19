@@ -19,7 +19,7 @@ public class ProgressBarUi : MonoBehaviour {
         Hide();
     }
 
-    private void HasProgress_OnProgressChanged(object sender, IHasProgress.OnProgressChangedEventArgs e) {
+    private void HasProgress_OnProgressChanged(object sender, IHasProgress.ProgressChangedEventArgs e) {
         barImage.fillAmount = e.ProgressNormalized;
         if (e.ProgressNormalized is >= 1 or <= 0) {
             Hide();

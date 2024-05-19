@@ -7,13 +7,13 @@ public class GameData {
     public int TotalScore;
     public int TimeLeft; // TimeLeft is not implemented yet, possibly never will be
     
-    public RecipeSO.RecipeData NewRecipe;
-    public List<int> RecipeDelivered = null;
+    public Order.OrderInfo NewOrder;
+    public List<int> OrderDelivered = null;
     public int RecipeTimeout; // Timeout is not implemented yet, possibly never will be
-    public List<RecipeSO.RecipeData> RecipeList = null;
+    public List<Order.OrderInfo> OrderList = null;
     
     public Vector2 PlayerPosition;
-    public List<string> PlayerHoldItems;
+    public List<int> PlayerHoldItems;
     
     public int FryingTimer;
     public StoveCounter.FryingState FryingState;

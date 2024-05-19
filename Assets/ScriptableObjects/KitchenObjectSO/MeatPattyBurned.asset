@@ -15,3 +15,4 @@ MonoBehaviour:
   prefab: {fileID: 3795429267499759152, guid: 7dd2e5024e82d4deaa77f502e8b7762d, type: 3}
   sprite: {fileID: 21300000, guid: 713ea9afa60dd6e4ebf6503a33e8cc99, type: 3}
   objectName: MeatPattyBurned
+  objectID: 10

@@ -21,7 +21,7 @@ public class GameOverUI : MonoBehaviour {
     }
     
     private void SetRecipeDeliveredText() {
-        recipeDeliveredText.text = DeliveryManager.Instance.GetSuccessRecipeDelivered().ToString();
+        recipeDeliveredText.text = DeliveryManager.Instance.GetSuccessOrderDelivered().ToString();
     }
 
     private void Show() {

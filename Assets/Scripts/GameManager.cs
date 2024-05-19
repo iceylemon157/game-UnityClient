@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour {
     public event EventHandler OnGameStateChanged;
     public event EventHandler OnGamePaused;
     public event EventHandler OnGameUnPaused;
+    public event EventHandler OnNewRound;
 
     // Global GameData
     private GameData gameData;
@@ -53,7 +54,7 @@ public class GameManager : MonoBehaviour {
     private const float TotalGamePlayingTime = 30f;
     
     // Score related variables
-    private const int WrongRecipePenalty = -100;
+    private const int WrongRecipePenalty = 0;
     
     // Game Settings
     private bool _isServerMode = true; // Played by player or server
@@ -71,12 +72,13 @@ public class GameManager : MonoBehaviour {
 
     private void Start() {
         GameInput.Instance.OnPauseAction += GameInput_OnPauseAction;
-        DeliveryManager.Instance.OnRecipeSpawned += DeliveryManager_OnRecipeSpawned;
-        DeliveryManager.Instance.OnRecipeCompleted += DeliveryManager_OnRecipeCompleted;
+        DeliveryManager.Instance.OnOrderSpawned += DeliveryManager_OnOrderSpawned;
+        DeliveryManager.Instance.OnOrderCompleted += DeliveryManager_OnOrderCompleted;
         DeliveryManager.Instance.OnDeliveryFailed += DeliveryManager_OnDeliveryFailed;
         Player.Instance.OnHoldItemChanged += Player_OnHoldItemChanged;
         Player.Instance.OnPlayerMoved += Player_OnPlayerMoved;
         stoveCounter.OnFryingStateChange += StoveCounter_OnFryingStateChange;
+        stoveCounter.OnProgressChanged += StoveCounter_OnProgressChanged;
 
         gameData = new GameData();
         
@@ -85,6 +87,10 @@ public class GameManager : MonoBehaviour {
         gameData.TotalScore = 0;
         gameData.PlayerPosition = Player.Instance.GetPlayerPosition();
         
+    }
+
+    private void StoveCounter_OnProgressChanged(object sender, IHasProgress.ProgressChangedEventArgs e) {
+        gameData.FryingTimer = e.Progress;
     }
 
     private void Player_OnPlayerMoved(object sender, EventArgs e) {
@@ -103,47 +109,40 @@ public class GameManager : MonoBehaviour {
     private void Player_OnHoldItemChanged(object sender, EventArgs e) {
         
         if (!Player.Instance.HasKitchenObject()) {
-            gameData.PlayerHoldItems = new List<string>();
+            gameData.PlayerHoldItems = new List<int>();
             return;
         }
         
-        gameData.PlayerHoldItems = new List<string> {
-            Player.Instance.GetKitchenObject().GetObjectName()
+        gameData.PlayerHoldItems = new List<int> {
+            Player.Instance.GetKitchenObject().GetKitchenObjectSO().objectID
         };
 
         if (!Player.Instance.GetKitchenObject().TryGetPlate(out var plateKitchenObject)) return;
         // Player is holding a plate
         plateKitchenObject.OnIngredientAdded += Player_OnHoldItemChanged;
-        gameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.name));
+        gameData.PlayerHoldItems.AddRange(plateKitchenObject.GetKitchenObjectSOList().Select(x => x.objectID));
     }
 
     private void DeliveryManager_OnDeliveryFailed(object sender, EventArgs e) {
-        gameData.RecipeDelivered = new List<int> { -1, WrongRecipePenalty };
+        gameData.OrderDelivered = new List<int> { -1, WrongRecipePenalty };
         gameData.TotalScore += WrongRecipePenalty;
     }
 
-    private void DeliveryManager_OnRecipeCompleted(object sender, DeliveryManager.RecipeEventArgs e) {
-        Debug.Log("why the fuck are you calling me");
-        gameData.RecipeDelivered = new List<int> { e.RecipeSO.id, e.RecipeSO.recipeScore };
-        gameData.TotalScore += e.RecipeSO.recipeScore;
+    private void DeliveryManager_OnOrderCompleted(object sender, DeliveryManager.OrderEventArgs e) {
+        gameData.OrderDelivered = new List<int> { e.Order.OrderID, e.Order.OrderScore };
+        gameData.TotalScore += e.Order.OrderScore;
+        var orderList = e.WaitingOrders.Select(order => order.GetOrderInfo()).ToList();
+        gameData.OrderList = orderList;
     }
 
-    private void DeliveryManager_OnRecipeSpawned(object sender, DeliveryManager.RecipeEventArgs e) {
-        // Update GameData.NewRecipe and GameData.RecipeList
-        gameData.NewRecipe = new RecipeSO.RecipeData() {
-            id = e.RecipeSO.id,
-            recipeName = e.RecipeSO.recipeName,
-            recipeScore = e.RecipeSO.recipeScore,
-        };
-
-        gameData.RecipeList = new List<RecipeSO.RecipeData>();
-        foreach (var recipeSO in e.RecipeSOList) {
-            gameData.RecipeList.Add(new RecipeSO.RecipeData() {
-                id = recipeSO.id,
-                recipeName = recipeSO.recipeName,
-                recipeScore = recipeSO.recipeScore,
-            });
+    private void DeliveryManager_OnOrderSpawned(object sender, DeliveryManager.OrderEventArgs e) {
+        // Update GameData.NewOrder and GameData.OrderList
+        if (e.Order != null) {
+            gameData.NewOrder = e.Order.GetOrderInfo();
         }
+        
+        var orderList = e.WaitingOrders.Select(order => order.GetOrderInfo()).ToList();
+        gameData.OrderList = orderList;
     }
 
     private void GameInput_OnPauseAction(object sender, EventArgs e) {
@@ -173,6 +172,7 @@ public class GameManager : MonoBehaviour {
                     if (_roundState == RoundState.RoundEnd) {
                         _currentRound ++;
                         _roundState = RoundState.RoundStart;
+                        OnNewRound?.Invoke(this, EventArgs.Empty);
                         
                         gameData.Round = _currentRound;
                     }
