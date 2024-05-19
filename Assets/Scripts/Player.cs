@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -108,15 +107,22 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         if (GameManager.Instance.IsRoundStart()) {
             GameManager.Instance.SetRoundPlaying();
             roundEnd = false;
-            StartCoroutine(GetOperationFromServer(movementVector => {
-                // Debug.Log("Received movement vector from server!" + movementVector);
-                // Debug.Log("Operation sent and received!");
-                MapBasedHandleMovement(movementVector);
-                HandleInteractions(movementVector);
-                // Debug.Log("Ready to send events to server!");
-                SendEventsToServer();
-                roundEnd = true;
+            StartCoroutine(SendEventsRequestToServer(() => {
+                StartCoroutine(GetOperationFromServer(movementVector => {
+                    MapBasedHandleMovement(movementVector);
+                    HandleInteractions(movementVector);
+                    roundEnd = true;
+                }));
             }));
+            // StartCoroutine(GetOperationFromServer(movementVector => {
+            //     // Debug.Log("Received movement vector from server!" + movementVector);
+            //     // Debug.Log("Operation sent and received!");
+            //     MapBasedHandleMovement(movementVector);
+            //     HandleInteractions(movementVector);
+            //     // Debug.Log("Ready to send events to server!");
+            //     SendEventsToServer();
+            //     roundEnd = true;
+            // }));
             // StartCoroutine(SendEventsRequestToServer());
         }
         
@@ -138,17 +144,40 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         
         var url = "http://127.0.0.1:" + port + "/api/events";
 
-        var request = new UnityWebRequest(url, "POST");
-        request.SetRequestHeader("Content-Type", "application/json");
+        // var request = new UnityWebRequest(url, "POST");
+        // request.SetRequestHeader("Content-Type", "application/json");
 
         // var gameData = GetGameData();
         var gameData = GameManager.Instance.GetGameData();
         var gameDataJsonString = JsonUtility.ToJson(gameData);
         
+        var request = UnityWebRequest.Post(url, gameDataJsonString, "application/json");
+        
         var bodyRaw = System.Text.Encoding.UTF8.GetBytes(gameDataJsonString);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         
         yield return request.SendWebRequest();
+    }
+    
+    private IEnumerator SendEventsRequestToServer(Action callback) {
+        
+        var url = "http://127.0.0.1:" + port + "/api/events";
+
+        // request.SetRequestHeader("Content-Type", "application/json");
+
+        // var gameData = GetGameData();
+        var gameData = GameManager.Instance.GetGameData();
+        var gameDataJsonString = JsonUtility.ToJson(gameData);
+        
+        var request = UnityWebRequest.Post(url, gameDataJsonString, "application/json");
+        
+        // var bodyRaw = System.Text.Encoding.UTF8.GetBytes(gameDataJsonString);
+        // request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        
+        Debug.Log("uwu");
+        
+        yield return request.SendWebRequest();
+        callback();
     }
     
     private static GameData GetGameData() {
@@ -157,10 +186,10 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             TotalScore = Convert.ToInt32(GameManager.Instance.GetGamePlayingTimerNormalized() * 1000),
             TimeLeft = 0,
             
-            NewRecipe = null,
-            RecipeDelivered = new List<int> {0, 0},
+            NewOrder = null,
+            OrderDelivered = new List<int> {0, 0},
             RecipeTimeout = 0,
-            RecipeList = new List<RecipeSO.RecipeData>(),
+            OrderList = new List<Order.OrderInfo>(),
             
             PlayerPosition = new Vector2(0, 0),
             PlayerHoldItems = null,
