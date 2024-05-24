@@ -108,6 +108,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             GameManager.Instance.SetRoundPlaying();
             roundEnd = false;
             StartCoroutine(SendEventsRequestToServer(() => {
+                GameManager.Instance.ResetGameData();
                 StartCoroutine(GetOperationFromServer(movementVector => {
                     MapBasedHandleMovement(movementVector);
                     HandleInteractions(movementVector);
@@ -136,9 +137,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             PlayerSize, moveDir, moveDistance);
     }
     
-    private void SendEventsToServer() {
-        StartCoroutine(SendEventsRequestToServer());
-    }
+    // private void SendEventsToServer() {
+    //     StartCoroutine(SendEventsRequestToServer());
+    // }
     
     private IEnumerator SendEventsRequestToServer() {
         
@@ -163,9 +164,6 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         
         var url = "http://127.0.0.1:" + port + "/api/events";
 
-        // request.SetRequestHeader("Content-Type", "application/json");
-
-        // var gameData = GetGameData();
         var gameData = GameManager.Instance.GetGameData();
         var gameDataJsonString = JsonUtility.ToJson(gameData);
         
