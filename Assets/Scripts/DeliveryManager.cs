@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -47,7 +46,7 @@ public class DeliveryManager : MonoBehaviour {
 
         _latestSpawnOrderRound = 0;
 
-        GameManager.Instance.OnNewRound += (sender, e) => {
+        GameManager.Instance.OnNewRound += (_, _) => {
             var currentRound = GameManager.Instance.GetCurrentRound();
             var isAnyOrderUpdated = false;
             foreach (var order in _waitingOrders) {
@@ -66,12 +65,14 @@ public class DeliveryManager : MonoBehaviour {
                     WaitingOrders = _waitingOrders
                 });
             }
+            
+            RoundBasedUpdate();
         };
     }
 
     private void Update() {
         if (GameManager.Instance.IsServerMode()) {
-            RoundBasedUpdate();
+            // RoundBasedUpdate();
         } else {
             TimeBasedUpdate();
         }

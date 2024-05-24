@@ -138,6 +138,8 @@ public class GameManager : MonoBehaviour {
     private void DeliveryManager_OnOrderSpawned(object sender, DeliveryManager.OrderEventArgs e) {
         // Update GameData.NewOrder and GameData.OrderList
         if (e.Order != null) {
+            Debug.Log("Round: " + _currentRound);
+            Debug.Log("OnOrderSpawned: " + e.Order.GetOrderInfo().orderID + " - " + e.Order.GetOrderInfo().recipeID + " - " + e.Order.GetOrderInfo().orderScore + " - " + e.Order.GetOrderInfo().existedTime);
             gameData.NewOrder = e.Order.GetOrderInfo();
         }
         
@@ -170,6 +172,7 @@ public class GameManager : MonoBehaviour {
                 if (_isServerMode) {
                     // Round-based game logic
                     if (_roundState == RoundState.RoundEnd) {
+                        Debug.Log("--- New Round: " + _currentRound + " ---");
                         _currentRound ++;
                         _roundState = RoundState.RoundStart;
                         OnNewRound?.Invoke(this, EventArgs.Empty);
@@ -274,5 +277,15 @@ public class GameManager : MonoBehaviour {
     
     public bool IsServerMode() {
         return _isServerMode;
+    }
+
+    public void ResetGameData() {
+        // Only reset a few game data:
+        // OrderDelivered
+        gameData.OrderDelivered = new List<int> {0, 0};
+        gameData.NewOrder = new Order.OrderInfo {
+            orderID = -1
+        };
+        Debug.Log("Game Data Reset at Round: " + _currentRound);
     }
 }
