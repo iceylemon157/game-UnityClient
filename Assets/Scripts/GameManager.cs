@@ -293,4 +293,7 @@ public class GameManager : MonoBehaviour {
         // Debug.Log("Game Data Reset at Round: " + _currentRound);
     }
     
+    public int GetTotalScore() {
+        return gameData.TotalScore;
+    }
 }

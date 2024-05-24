@@ -1,13 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameOverUI : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI recipeDeliveredText;
+    [SerializeField] private Button restartButton;
+    
     private void Start() {
         GameManager.Instance.OnGameStateChanged += GameManager_OnGameStateChanged;
+        restartButton.onClick.AddListener(() => {
+            Loader.Load(Loader.Scene.GameScene);
+        });
         Hide();
     }
 
@@ -21,7 +25,11 @@ public class GameOverUI : MonoBehaviour {
     }
     
     private void SetRecipeDeliveredText() {
-        recipeDeliveredText.text = DeliveryManager.Instance.GetSuccessOrderDelivered().ToString();
+        // Show the number of successful orders delivered
+        // recipeDeliveredText.text = DeliveryManager.Instance.GetSuccessOrderDelivered().ToString();
+        
+        // Show the total score
+        recipeDeliveredText.text = GameManager.Instance.GetTotalScore().ToString();
     }
 
     private void Show() {
