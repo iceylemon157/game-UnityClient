@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class GamePauseUI : MonoBehaviour {
     [SerializeField] private Button resumeButton;
+    [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button muteButton;
 
@@ -14,12 +15,16 @@ public class GamePauseUI : MonoBehaviour {
         GameManager.Instance.OnGameUnPaused += GameManager_OnGameUnPaused;
         
         resumeButton.onClick.AddListener(() => { GameManager.Instance.TogglePause(); });
+        restartButton.onClick.AddListener(() => { Loader.Load(Loader.Scene.GameScene); });
         mainMenuButton.onClick.AddListener(() => { Loader.Load(Loader.Scene.MainMenuScene); });
         muteButton.onClick.AddListener(() => {
             AudioListener.pause = !AudioListener.pause;
             var tmPro = muteButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
             tmPro.text = AudioListener.pause ? "Unmute" : "Mute";
         });
+        
+        var tmPro = muteButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+        tmPro.text = AudioListener.pause ? "Unmute" : "Mute";
         
         Hide();
     }

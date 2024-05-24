@@ -87,6 +87,10 @@ public class GameManager : MonoBehaviour {
         gameData.TotalScore = 0;
         gameData.PlayerPosition = Player.Instance.GetPlayerPosition();
         
+        // Unpause the game if it was paused
+        if (!_isGamePaused) {
+            TogglePause();
+        }
     }
 
     private void StoveCounter_OnProgressChanged(object sender, IHasProgress.ProgressChangedEventArgs e) {
@@ -138,8 +142,8 @@ public class GameManager : MonoBehaviour {
     private void DeliveryManager_OnOrderSpawned(object sender, DeliveryManager.OrderEventArgs e) {
         // Update GameData.NewOrder and GameData.OrderList
         if (e.Order != null) {
-            Debug.Log("Round: " + _currentRound);
-            Debug.Log("OnOrderSpawned: " + e.Order.GetOrderInfo().orderID + " - " + e.Order.GetOrderInfo().recipeID + " - " + e.Order.GetOrderInfo().orderScore + " - " + e.Order.GetOrderInfo().existedTime);
+            // Debug.Log("Round: " + _currentRound);
+            // Debug.Log("OnOrderSpawned: " + e.Order.GetOrderInfo().orderID + " - " + e.Order.GetOrderInfo().recipeID + " - " + e.Order.GetOrderInfo().orderScore + " - " + e.Order.GetOrderInfo().existedTime);
             gameData.NewOrder = e.Order.GetOrderInfo();
         }
         
@@ -172,7 +176,7 @@ public class GameManager : MonoBehaviour {
                 if (_isServerMode) {
                     // Round-based game logic
                     if (_roundState == RoundState.RoundEnd) {
-                        Debug.Log("--- New Round: " + _currentRound + " ---");
+                        // Debug.Log("--- New Round: " + _currentRound + " ---");
                         _currentRound ++;
                         _roundState = RoundState.RoundStart;
                         OnNewRound?.Invoke(this, EventArgs.Empty);
@@ -185,8 +189,8 @@ public class GameManager : MonoBehaviour {
                     // Debug.Log("Current Round: " + _currentRound);
                 } else {
                     // Time-based game logic
-                    _gamePlayingTimer -= Time.deltaTime;
-                    // Debug.Log("Time Left: " + _gamePlayingTimer + "s");
+                    // Infinite game, never game over
+                    // _gamePlayingTimer -= Time.deltaTime;
                     if (_gamePlayingTimer <= 0f) {
                         State = GameState.GameOver;
                     }
@@ -286,6 +290,7 @@ public class GameManager : MonoBehaviour {
         gameData.NewOrder = new Order.OrderInfo {
             orderID = -1
         };
-        Debug.Log("Game Data Reset at Round: " + _currentRound);
+        // Debug.Log("Game Data Reset at Round: " + _currentRound);
     }
+    
 }
