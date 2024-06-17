@@ -16,6 +16,6 @@ MonoBehaviour:
   recipeScore: 1000
   kitchenObjectSOList:
   - {fileID: 11400000, guid: b07e4ca64a190444e9c66b3bfa2e9267, type: 2}
-  - {fileID: 11400000, guid: 1619cb2357c13467092d45a8f3c6c2bd, type: 2}
   - {fileID: 11400000, guid: ce47d8cdd83f94019982912e450673f3, type: 2}
+  - {fileID: 11400000, guid: 1619cb2357c13467092d45a8f3c6c2bd, type: 2}
   recipeName: CheeseBurger

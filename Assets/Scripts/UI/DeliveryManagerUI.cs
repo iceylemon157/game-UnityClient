@@ -37,6 +37,6 @@ public class DeliveryManagerUI : MonoBehaviour {
             recipeTransform.gameObject.SetActive(true);
             recipeTransform.GetComponent<RecipeUI>().SetRecipeSO(waitingOrder.RecipeSO);
         }
-        Debug.Log("Finishing Updating visual for waiting recipes");
+        // Debug.Log("Finishing Updating visual for waiting recipes");
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -68,6 +69,13 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     private void GameInput_OnInteractAlternativeAction(object sender, EventArgs e) {
         if (!GameManager.Instance.IsGamePlaying()) return;
+        var x = (int)_playerPosition.x;
+        var y = (int)_playerPosition.y;
+        if (GameManager.Instance.IsServerMode()) {
+            if (x != 0 && y != 0 && x != 8 && y != 20) {
+                return;
+            }
+        }
         if (_selectedCounter != null) {
             _selectedCounter.InteractAlternative(this);
         }
@@ -75,6 +83,13 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     private void GameInput_OnInteractAction(object sender, EventArgs e) {
         if (!GameManager.Instance.IsGamePlaying()) return;
+        var x = (int)_playerPosition.x;
+        var y = (int)_playerPosition.y;
+        if (GameManager.Instance.IsServerMode()) {
+            if (x != 0 && y != 0 && x != 8 && y != 20) {
+                return;
+            }
+        }
         if (_selectedCounter != null) {
             _selectedCounter.Interact(this);
         }
@@ -82,9 +97,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
 
     private void GameInput_OnDropAction(object sender, EventArgs e) {
         // press q to drop the kitchen object with constant speed
-        Debug.Log("You have pressed the drop button!");
+        // Debug.Log("You have pressed the drop button!");
         if (!HasKitchenObject()) return;
-        Debug.Log("Kitchen object: " + GetKitchenObject() + "is being dropped!");
+        // Debug.Log("Kitchen object: " + GetKitchenObject() + "is being dropped!");
         var kitchenObject = GetKitchenObject();
         ClearKitchenObject();
         kitchenObject.FallWithConstantSpeed();
@@ -256,7 +271,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
             Debug.Log("Initial message sent to the server!");
             Debug.Log("Server seems to be ready!");
         } else {
-            Debug.Log("Your server fucked up!");
+            Debug.Log("Your server is -filtered-!");
             Debug.Log($"This is the message from server: {result}!");
         }
         
