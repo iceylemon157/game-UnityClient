@@ -9,6 +9,7 @@ public class GamePauseUI : MonoBehaviour {
     [SerializeField] private Button restartButton;
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button muteButton;
+    private const string MusicPauseKey = "MusicPauseKey";
 
     private void Start() {
         GameManager.Instance.OnGamePaused += GameManager_OnGamePaused;
@@ -18,13 +19,14 @@ public class GamePauseUI : MonoBehaviour {
         restartButton.onClick.AddListener(() => { Loader.Load(Loader.Scene.GameScene); });
         mainMenuButton.onClick.AddListener(() => { Loader.Load(Loader.Scene.MainMenuScene); });
         muteButton.onClick.AddListener(() => {
-            AudioListener.pause = !AudioListener.pause;
+            var pause = MusicManager.Instance.Toggle();
             var tmPro = muteButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-            tmPro.text = AudioListener.pause ? "Unmute" : "Mute";
+            tmPro.text = pause == 1? "Unmute" : "Mute";
         });
         
+        var pause = PlayerPrefs.GetInt(MusicPauseKey, 0) == 1;
         var tmPro = muteButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-        tmPro.text = AudioListener.pause ? "Unmute" : "Mute";
+        tmPro.text = pause ? "Unmute" : "Mute";
         
         Hide();
     }

@@ -91,6 +91,10 @@ public class GameManager : MonoBehaviour {
         if (!_isGamePaused) {
             TogglePause();
         }
+        
+        // AudioListener will play no matter what after restarting, which is strange
+        var pause = AudioListener.pause;
+        AudioListener.pause = pause;
     }
 
     private void StoveCounter_OnProgressChanged(object sender, IHasProgress.ProgressChangedEventArgs e) {
