@@ -32,6 +32,14 @@ public class DeliveryManager : MonoBehaviour {
     private int _latestSpawnOrderRound;
     private const int SpawnOrderRound = 100;
     private const int MaxOrderScore = 1000;
+    
+    // Different Recipe Mode
+    private const string RecipeModeKey = "RecipeMode";
+    private enum RecipeMode {
+        Salad,
+        SaladAndCheeseBurger,
+        AllRecipe
+    }
 
     private void Awake() {
         Instance = this;
@@ -98,7 +106,17 @@ public class DeliveryManager : MonoBehaviour {
     private void CreateNewOrder() {
         if (_waitingOrdersCount >= WaitingOrdersMax) return;
         var currentRound = GameManager.Instance.GetCurrentRound();
+        // recipeSOList: Burger, CheeseBurger, MegaBurger, Salad
+        var recipeMode = PlayerPrefs.GetString(RecipeModeKey);
         var newRecipeSO = recipeListSO.recipeSOList[Random.Range(0, recipeListSO.recipeSOList.Count)];
+        
+        if (recipeMode == RecipeMode.SaladAndCheeseBurger.ToString()) {
+            var index = 2 * Random.Range(0, 2) + 1;
+            newRecipeSO = recipeListSO.recipeSOList[index];
+        } else if (recipeMode == RecipeMode.Salad.ToString()) {
+            newRecipeSO = recipeListSO.recipeSOList.Last();
+        }
+        
         var newWaitingOrder = new Order {
             OrderID = ++ _mostRecentOrderID,
             RecipeSO = newRecipeSO,
@@ -106,8 +124,8 @@ public class DeliveryManager : MonoBehaviour {
             ExistedTime = currentRound
         };
 
-        Debug.Log("Order ID: " + newWaitingOrder.OrderID);
-        Debug.Log("Recipe of the order: " + newWaitingOrder.RecipeSO.recipeName);
+        // Debug.Log("Order ID: " + newWaitingOrder.OrderID);
+        // Debug.Log("Recipe of the order: " + newWaitingOrder.RecipeSO.recipeName);
 
         _waitingOrders.Add(newWaitingOrder);
         _waitingOrdersCount ++;

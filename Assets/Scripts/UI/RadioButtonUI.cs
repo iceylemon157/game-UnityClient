@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class RadioButtonUI : MonoBehaviour {
     [SerializeField] private Image selectedButtonImage;
+    [SerializeField] public string recipeMode;
     
     private Toggle _toggle;
     
