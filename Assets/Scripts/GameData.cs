@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class GameData {
+
+    public string RecipeMode;
+    
     public int Round;
     public int TotalScore;
     public int TimeLeft; // TimeLeft is not implemented yet, possibly never will be

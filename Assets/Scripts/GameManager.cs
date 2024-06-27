@@ -59,6 +59,7 @@ public class GameManager : MonoBehaviour {
     // Game Settings
     private bool _isServerMode = true; // Played by player or server
     private const string IsServerModeKey = "IsServerMode";
+    private const string RecipeModeKey = "RecipeMode";
     
     [SerializeField] private StoveCounter stoveCounter;
     
@@ -83,6 +84,7 @@ public class GameManager : MonoBehaviour {
         gameData = new GameData();
         
         _currentRound = 1;
+        gameData.RecipeMode = PlayerPrefs.GetString(RecipeModeKey);
         gameData.Round = _currentRound;
         gameData.TotalScore = 0;
         gameData.PlayerPosition = Player.Instance.GetPlayerPosition();
