@@ -40,6 +40,9 @@ public class DeliveryManager : MonoBehaviour {
         SaladAndCheeseBurger,
         AllRecipe
     }
+    
+    // Seed key
+    private const string SeedKey = "Seed";
 
     private void Awake() {
         Instance = this;
@@ -53,6 +56,12 @@ public class DeliveryManager : MonoBehaviour {
         _mostRecentOrderID = 0;
 
         _latestSpawnOrderRound = 0;
+        
+        // set random seed if any
+        var seed = PlayerPrefs.GetInt(SeedKey);
+        if (seed != -1) {
+            Random.InitState(seed);
+        }
 
         GameManager.Instance.OnNewRound += (_, _) => {
             var currentRound = GameManager.Instance.GetCurrentRound();

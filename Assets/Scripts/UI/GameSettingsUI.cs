@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -14,7 +13,10 @@ public class GameSettingsUI : MonoBehaviour {
     [SerializeField] private Button quitButton;
     [SerializeField] private Button quitButton2;
     
+    [SerializeField] private TMP_InputField seedInputField;
     [SerializeField] private ToggleGroup recipeModeToggleGroup;
+    
+    private const string SeedKey = "Seed";
     private const string RecipeModeKey = "RecipeMode";
     
     private void Start() {
@@ -23,6 +25,13 @@ public class GameSettingsUI : MonoBehaviour {
                 RecipeModeKey,
                 recipeModeToggleGroup.ActiveToggles().First().GetComponent<RadioButtonUI>().recipeMode
                 );
+            
+            // Check whether seed is a number within the range of int
+            if (!int.TryParse(seedInputField.text, out var seed)) {
+                seed = -1;
+            }
+            PlayerPrefs.SetInt(SeedKey, seed);
+            
             Loader.Load(Loader.Scene.GameScene);
         });
         quitButton.onClick.AddListener(() => {
