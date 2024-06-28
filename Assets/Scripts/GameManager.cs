@@ -67,7 +67,13 @@ public class GameManager : MonoBehaviour {
     [SerializeField] private StoveCounter stoveCounter;
     
     private void Awake() {
-        Instance = this;
+        
+        if (Instance == null) {
+            Instance = this;
+        } else {
+            Destroy(gameObject);
+        }
+        
         State = GameState.MainMenu;
         
         // Read Game Settings
@@ -356,5 +362,9 @@ public class GameManager : MonoBehaviour {
     public bool IsMultiplayerGame() {
         // Deadline is near, only multiplayer mode is implemented
         return true;
+    }
+    
+    public bool IsGameStarted() {
+        return _gameStarted;
     }
 }
