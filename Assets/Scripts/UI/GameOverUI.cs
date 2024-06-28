@@ -5,7 +5,10 @@ using UnityEngine.UI;
 
 public class GameOverUI : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI recipeDeliveredText;
+    [SerializeField] private TextMeshProUGUI finalScoreLabelText;
     [SerializeField] private Button restartButton;
+    
+    private const string ChosenTeamKey = "ChosenTeamKey";
     
     private void Start() {
         GameManager.Instance.OnGameStateChanged += GameManager_OnGameStateChanged;
@@ -29,6 +32,8 @@ public class GameOverUI : MonoBehaviour {
         // recipeDeliveredText.text = DeliveryManager.Instance.GetSuccessOrderDelivered().ToString();
         
         // Show the total score
+        var teamName = $"Team {PlayerPrefs.GetInt(ChosenTeamKey, 1)}";
+        finalScoreLabelText.text = teamName + " Score:";
         recipeDeliveredText.text = GameManager.Instance.GetTotalScore().ToString();
     }
 
