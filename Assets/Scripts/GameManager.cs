@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
+using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour {
     public static GameManager Instance { get; private set; }
@@ -49,6 +51,7 @@ public class GameManager : MonoBehaviour {
     // Time-based game variables
     private bool _isGamePaused;
     private float _mainMenuTimer = 1f;
+    private bool _gameStarted;
     private float _countDownTimer = 3f;
     private float _gamePlayingTimer = 30f;
     private const float TotalGamePlayingTime = 30f;
@@ -160,10 +163,57 @@ public class GameManager : MonoBehaviour {
     private void GameInput_OnPauseAction(object sender, EventArgs e) {
         TogglePause();
     }
+    
+    private void ConnectToServer() {
+        // Debug.Log("enter ConnectToServer()");
+        const string centralServerUrl = "http://localhost:3000";
+        
+        // Should be replaced with the actual team name
+        var teamName = $"Team {PlayerPrefs.GetInt("ChosenTeamKey", 1)}";
+        
+        StartCoroutine(ConnectToServer(centralServerUrl, teamName, (res) => {
+            if (res == "start") {
+                _gameStarted = true;
+                Debug.Log("uwu connect to server");
+            }
+        }));
+    }
+    
+    private IEnumerator ConnectToServer(string url, string teamName, Action<string> callback) {
+        
+        var dataString = "{\"teamName\":\"" + teamName + "\"}";
+        var webRequest = UnityWebRequest.Post(url, dataString, "application/json");
+        
+        yield return webRequest.SendWebRequest();
+        
+        var result = webRequest.downloadHandler.text;
+        
+        // If the result is error, print the error message
+        if (webRequest.result is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError) {
+            Debug.LogError(webRequest.error);
+        }
+        
+        
+        if (result == "waiting") {
+            Debug.Log("Still waiting for other players to join...");
+        } else if (result == "start") {
+            Debug.Log("Game started!");
+        } else {
+            Debug.Log("Your server is -filtered-!");
+            Debug.Log($"This is the message from server: {result}!");
+        }
+
+        callback(result);
+    }
 
     private void Update() {
         switch (State) {
             case GameState.MainMenu:
+                ConnectToServer();  
+                if (!_gameStarted) {
+                    return;
+                }
+                // TODO: Show waiting UI
                 _mainMenuTimer -= Time.deltaTime;
                 if (_mainMenuTimer <= 0f) {
                     State = GameState.Countdown;
@@ -301,5 +351,10 @@ public class GameManager : MonoBehaviour {
     
     public int GetTotalScore() {
         return gameData.TotalScore;
+    }
+
+    public bool IsMultiplayerGame() {
+        // Deadline is near, only multiplayer mode is implemented
+        return true;
     }
 }

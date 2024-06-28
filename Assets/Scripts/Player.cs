@@ -43,6 +43,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
     // Map related game variables
     private static readonly Vector2 InitialPlayerPosition = new Vector2(4, 10);
     private Vector2 _playerPosition;
+    
+    // Multiplayer game variables
+    private const string ChosenTeamKey = "ChosenTeamKey";
 
     private void Awake() {
         if (Instance != null) {
@@ -60,11 +63,17 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         GameInput.Instance.OnInteractAlternativeAction += GameInput_OnInteractAlternativeAction;
         GameInput.Instance.OnDropAction += GameInput_OnDropAction;
 
+        // Change the port number for multiplayer game
+        if (GameManager.Instance.IsMultiplayerGame()) {
+            port = 8800 + PlayerPrefs.GetInt(ChosenTeamKey, 1);
+        }
         
         // send an initial message to the server if the game is in server mode
         if (GameManager.Instance.IsServerMode()) {
             StartCoroutine(SendInitialMessageToServer());
         }
+        
+        Debug.Log("Connecting to port: " + port);
     }
 
     private void GameInput_OnInteractAlternativeAction(object sender, EventArgs e) {
