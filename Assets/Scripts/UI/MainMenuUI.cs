@@ -48,10 +48,10 @@ public class MainMenuUI : MonoBehaviour {
         // Ignore this, webgl doesn't have direct access to file system
         // var path = Application.dataPath + "/Teams";
         // var teamFolders = Directory.GetDirectories(path);
-        var teamFolders = new string[12];
+        var teamFolders = new string[16];
         var teamList = new List<string>(new string[teamFolders.Length]);
         
-        for (var i = 1; i <= 12; i ++) {
+        for (var i = 1; i <= 16; i ++) {
             teamList[i - 1] = "Team " + i;
         }
         
