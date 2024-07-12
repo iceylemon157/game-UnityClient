@@ -45,7 +45,12 @@ public class DeliveryManager : MonoBehaviour {
     private const string SeedKey = "Seed";
 
     private void Awake() {
-        Instance = this;
+        if (Instance == null) {
+            Instance = this;
+        } else {
+            Destroy(gameObject);
+        }
+        
         _waitingOrders = new List<Order>();
     }
 
@@ -61,6 +66,7 @@ public class DeliveryManager : MonoBehaviour {
         var seed = PlayerPrefs.GetInt(SeedKey);
         if (seed != -1) {
             Random.InitState(seed);
+            Debug.Log("seed: " + seed);
         }
 
         GameManager.Instance.OnNewRound += (_, _) => {

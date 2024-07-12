@@ -11,7 +11,7 @@ public class RecipeUI : MonoBehaviour {
     public void SetRecipeSO(RecipeSO recipeSO) {
         recipeNameText.text = recipeSO.recipeName;
         foreach (var kitchenObjectSO in recipeSO.kitchenObjectSOList) {
-            Debug.Log(kitchenObjectSO.objectName);
+            // Debug.Log(kitchenObjectSO.objectName);
             var iconTransform = Instantiate(iconTemplate, iconContainer);
             iconTransform.gameObject.SetActive(true);
             iconTransform.GetComponent<Image>().sprite = kitchenObjectSO.sprite;
