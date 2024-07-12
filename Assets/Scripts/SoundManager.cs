@@ -54,7 +54,9 @@ public class SoundManager : MonoBehaviour {
     }
 
     private void PlaySound(AudioClip[] audioClipArray, Vector3 position, float volume = 1f) {
-        var audioClip = audioClipArray[UnityEngine.Random.Range(0, audioClipArray.Length)];
+        // var audioClip = audioClipArray[UnityEngine.Random.Range(0, audioClipArray.Length)];
+        // temporary fix to avoid random seed issue
+        var audioClip = audioClipArray[0];
         PlaySound(audioClip, position, volume);
     }
 
