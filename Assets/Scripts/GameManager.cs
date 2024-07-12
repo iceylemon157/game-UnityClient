@@ -64,7 +64,13 @@ public class GameManager : MonoBehaviour {
     [SerializeField] private StoveCounter stoveCounter;
     
     private void Awake() {
-        Instance = this;
+        
+        if (Instance == null) {
+            Instance = this;
+        } else {
+            Destroy(gameObject);
+        }
+        
         State = GameState.MainMenu;
         
         // Read Game Settings

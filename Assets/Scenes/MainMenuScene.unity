@@ -4488,6 +4488,7 @@ MonoBehaviour:
   playButton: {fileID: 243346381}
   quitButton: {fileID: 747058506}
   quitButton2: {fileID: 1807390923}
+  seedInputField: {fileID: 1074989584}
   recipeModeToggleGroup: {fileID: 1886851412}
 --- !u!4 &1492414619 stripped
 Transform:
